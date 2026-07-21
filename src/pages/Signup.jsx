@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabase';
+import { toKoreanAuthError } from '../authErrors';
 
 function Signup() {
   const navigate = useNavigate();
@@ -17,9 +18,13 @@ function Signup() {
     });
 
     if (error) {
-      alert('회원가입 실패: ' + error.message);
+      alert('회원가입 실패: ' + toKoreanAuthError(error));
       return;
     }
+
+    // 회원가입 시 Supabase가 세션을 바로 만들어 자동 로그인되는 것을 막고,
+    // 사용자가 직접 로그인하도록 세션을 끊어줍니다.
+    await supabase.auth.signOut();
 
     alert('회원가입 완료! 로그인해 주세요.');
     navigate('/login');

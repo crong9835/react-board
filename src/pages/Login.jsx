@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabase';
+import { toKoreanAuthError } from '../authErrors';
 
 function Login() {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ function Login() {
     });
 
     if (error) {
-      alert('로그인 실패: ' + error.message);
+      alert('로그인 실패: ' + toKoreanAuthError(error));
       return;
     }
 

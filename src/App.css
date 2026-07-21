@@ -184,3 +184,30 @@ h2 {
 .btn-danger:hover {
   background-color: #fdf3f2;
 }
+
+/* 글자수 카운터 (제목/내용 입력 아래 표시) */
+.char-count {
+  margin: 4px 2px 0;
+  font-size: 12px;
+  color: #999;
+  text-align: right;
+}
+
+/* 페이지네이션 버튼 영역 */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.pagination .btn {
+  min-width: 40px;
+  padding: 6px 12px;
+}
+
+.pagination .btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
