@@ -13,6 +13,12 @@ function PostEdit({ posts, setPosts }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    // 제목/내용이 비어있으면 수정 막기
+    if (!title.trim() || !content.trim()) {
+      alert('제목과 내용을 모두 입력해주세요.');
+      return;
+    }
+
     // 제목과 내용만 수정 (작성자는 바뀌지 않음)
     const { error } = await supabase
       .from('posts')

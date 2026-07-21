@@ -12,6 +12,12 @@ function PostWrite({ posts, setPosts }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    // 제목/내용이 비어있으면 등록 막기
+    if (!title.trim() || !content.trim()) {
+      alert('제목과 내용을 모두 입력해주세요.');
+      return;
+    }
+
     // 작성자는 로그인한 사용자로 자동 저장
     // user_id 를 같이 저장해야 나중에 "본인 글"인지 확인할 수 있음
     const { data, error } = await supabase
