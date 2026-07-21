@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../supabase';
 
 function PostDetail({ posts, setPosts }) {
   const { id } = useParams();
@@ -6,8 +7,15 @@ function PostDetail({ posts, setPosts }) {
 
   const post = posts.find((post) => post.id === Number(id));
 
-  function handleDelete() {
-    setPosts(posts.filter((p) => p.id !== Number(id)));
+  async function handleDelete() {
+    const { error } = await supabase.from('posts').delete().eq('id', id);
+
+    if (error) {
+      console.log('삭제 에러:', error);
+      return;
+    }
+
+    setPosts(posts.filter((post) => post.id !== Number(id)));
     navigate('/');
   }
 

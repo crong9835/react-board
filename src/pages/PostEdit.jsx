@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { supabase } from '../supabase';
 
 function PostEdit({ posts, setPosts }) {
   const navigate = useNavigate();
@@ -11,8 +12,18 @@ function PostEdit({ posts, setPosts }) {
   const [title, setTitle] = useState(post ? post.title : '');
   const [content, setContent] = useState(post ? post.content : '');
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    const { error } = await supabase
+      .from('posts')
+      .update({ title, writer, content })
+      .eq('id', Number(id));
+
+    if (error) {
+      console.log('수정 에러:', error);
+      return;
+    }
+
     setPosts(
       posts.map((p) =>
         p.id === Number(id)
