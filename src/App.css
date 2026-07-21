@@ -211,3 +211,44 @@ h2 {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* 모달(팝업) */
+/* 화면 전체를 덮는 반투명 검은 배경 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+/* 가운데 뜨는 하얀 상자 */
+.modal-box {
+  width: 100%;
+  max-width: 360px;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 24px 20px 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.modal-message {
+  margin: 0 0 20px;
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: center;
+  white-space: pre-wrap; /* 줄바꿈 그대로 보여주기 */
+}
+
+/* 모달 안 버튼 영역 */
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}

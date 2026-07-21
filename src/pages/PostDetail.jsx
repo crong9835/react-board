@@ -1,19 +1,26 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { supabase } from '../supabase';
 import { useUser } from '../AuthContext';
+import Modal from '../components/Modal';
 
 function PostDetail({ posts, setPosts }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const user = useUser(); // 로그인한 사용자 (없으면 null)
 
+  // 삭제 확인 모달이 열려 있는지 여부
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
   const post = posts.find((post) => post.id === Number(id));
 
+  // 실제 삭제 처리 (모달에서 "삭제"를 눌렀을 때 실행)
   async function handleDelete() {
     const { error } = await supabase.from('posts').delete().eq('id', id);
 
     if (error) {
       console.log('삭제 에러:', error);
+      setIsConfirmOpen(false);
       return;
     }
 
@@ -46,12 +53,24 @@ function PostDetail({ posts, setPosts }) {
             <button className="btn" onClick={() => navigate(`/edit/${id}`)}>
               수정하기
             </button>
-            <button className="btn btn-danger" onClick={handleDelete}>
+            <button
+              className="btn btn-danger"
+              onClick={() => setIsConfirmOpen(true)}
+            >
               삭제하기
             </button>
           </div>
         )}
       </div>
+
+      {/* 삭제 확인 모달 (취소 / 삭제 두 버튼) */}
+      <Modal
+        isOpen={isConfirmOpen}
+        message="정말 삭제하시겠습니까?"
+        confirmText="삭제"
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

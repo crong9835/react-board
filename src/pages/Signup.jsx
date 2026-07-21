@@ -2,11 +2,32 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { toKoreanAuthError } from '../authErrors';
+import Modal from '../components/Modal';
 
 function Signup() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  // 모달(팝업) 상태
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  // 모달을 닫은 뒤 로그인 페이지로 이동할지 여부
+  const [goToLoginAfterClose, setGoToLoginAfterClose] = useState(false);
+
+  // 안내 문구를 모달로 띄우는 함수
+  function openModal(message) {
+    setModalMessage(message);
+    setIsModalOpen(true);
+  }
+
+  // 모달을 닫을 때 실행. 회원가입 성공이었으면 로그인 페이지로 이동합니다.
+  function handleModalClose() {
+    setIsModalOpen(false);
+    if (goToLoginAfterClose) {
+      navigate('/login');
+    }
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -18,7 +39,7 @@ function Signup() {
     });
 
     if (error) {
-      alert('회원가입 실패: ' + toKoreanAuthError(error));
+      openModal('회원가입 실패: ' + toKoreanAuthError(error));
       return;
     }
 
@@ -26,8 +47,9 @@ function Signup() {
     // 사용자가 직접 로그인하도록 세션을 끊어줍니다.
     await supabase.auth.signOut();
 
-    alert('회원가입 완료! 로그인해 주세요.');
-    navigate('/login');
+    // 확인을 누르면 로그인 페이지로 이동하도록 표시해 둡니다.
+    setGoToLoginAfterClose(true);
+    openModal('회원가입 완료! 로그인해 주세요.');
   }
 
   return (
@@ -55,6 +77,13 @@ function Signup() {
       <p className="auth-switch">
         이미 계정이 있으신가요? <Link to="/login">로그인</Link>
       </p>
+
+      {/* 안내용 모달 (확인 버튼 하나) — 회원가입 성공이면 확인 시 로그인 페이지로 이동 */}
+      <Modal
+        isOpen={isModalOpen}
+        message={modalMessage}
+        onClose={handleModalClose}
+      />
     </div>
   );
 }
