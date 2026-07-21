@@ -4,11 +4,42 @@
   padding: 32px 16px;
 }
 
-.app > h1 {
-  font-size: 24px;
+/* 헤더 (로고 + 로그인 메뉴) */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin: 0 0 24px;
   padding-bottom: 16px;
   border-bottom: 2px solid #333;
+}
+
+.header .logo {
+  text-decoration: none;
+  color: inherit;
+}
+
+.header h1 {
+  font-size: 24px;
+  margin: 0;
+}
+
+.auth-menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-email {
+  color: #555;
+  font-size: 14px;
+}
+
+/* 로그인/회원가입 아래 안내 문구 */
+.auth-switch {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #555;
 }
 
 h2 {
@@ -83,7 +114,7 @@ h2 {
 
 .form textarea {
   min-height: 200px;
-  resize: vertical;
+  resize: none;
 }
 
 .form input:focus,
@@ -95,19 +126,40 @@ h2 {
 /* 버튼 */
 .actions {
   display: flex;
+  justify-content: space-between; /* 목록으로(왼쪽) ↔ 수정·삭제(오른쪽) */
   gap: 8px;
   margin-top: 20px;
 }
 
+/* 오른쪽에 묶이는 수정/삭제 버튼 그룹 */
+.actions-right {
+  display: flex;
+  gap: 8px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .btn {
-  display: inline-block;
+  /* button 과 a(링크) 둘 다 똑같은 크기로 보이게 flex 정렬 사용 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
   padding: 8px 18px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #fff;
   color: inherit;
+  font-family: inherit;
   font-size: 14px;
+  line-height: 1.5;
+  white-space: nowrap;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .btn:hover {
@@ -115,7 +167,6 @@ h2 {
 }
 
 .btn-primary {
-  align-self: flex-end;
   border-color: #333;
   background-color: #333;
   color: #fff;

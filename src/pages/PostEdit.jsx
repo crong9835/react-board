@@ -1,6 +1,5 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { supabase } from '../supabase';
 
 function PostEdit({ posts, setPosts }) {
@@ -8,15 +7,16 @@ function PostEdit({ posts, setPosts }) {
   const { id } = useParams();
   const post = posts.find((post) => post.id === Number(id));
 
-  const [writer, setWriter] = useState(post ? post.writer : '');
   const [title, setTitle] = useState(post ? post.title : '');
   const [content, setContent] = useState(post ? post.content : '');
 
   async function handleSubmit(event) {
     event.preventDefault();
+
+    // 제목과 내용만 수정 (작성자는 바뀌지 않음)
     const { error } = await supabase
       .from('posts')
-      .update({ title, writer, content })
+      .update({ title, content })
       .eq('id', Number(id));
 
     if (error) {
@@ -26,9 +26,7 @@ function PostEdit({ posts, setPosts }) {
 
     setPosts(
       posts.map((p) =>
-        p.id === Number(id)
-          ? { ...p, writer: writer, title: title, content: content }
-          : p,
+        p.id === Number(id) ? { ...p, title: title, content: content } : p,
       ),
     );
     navigate(`/post/${id}`);
@@ -45,21 +43,21 @@ function PostEdit({ posts, setPosts }) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
-        <input
-          type="text"
-          placeholder="작성자"
-          value={writer}
-          onChange={(e) => setWriter(e.target.value)}
-        />
 
         <textarea
           placeholder="내용"
           value={content}
           onChange={(e) => setContent(e.target.value)}
         />
-        <button type="submit" className="btn btn-primary">
-          수정
-        </button>
+        <div className="form-actions">
+          <button type="button" className="btn" onClick={() => navigate(-1)}>
+            취소
+          </button>
+
+          <button type="submit" className="btn btn-primary">
+            수정
+          </button>
+        </div>
       </form>
     </div>
   );
