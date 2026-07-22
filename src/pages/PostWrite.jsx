@@ -16,10 +16,9 @@ function PostWrite({ posts, setPosts }) {
   // 모달을 닫은 뒤 목록 페이지로 이동할지 여부 (등록 성공했을 때만 true)
   const [goToListAfterClose, setGoToListAfterClose] = useState(false);
 
-  const TITLE_MAX = 30; // 제목 최대 글자수
-  const CONTENT_MAX = 500; // 내용 최대 글자수
+  const TITLE_MAX = 30;
+  const CONTENT_MAX = 500;
 
-  // 안내 문구를 모달로 띄우는 함수
   function openModal(message) {
     setModalMessage(message);
     setIsModalOpen(true);
@@ -36,13 +35,11 @@ function PostWrite({ posts, setPosts }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    // 제목/내용이 비어있으면 등록 막기
     if (!title.trim() || !content.trim()) {
       openModal('제목과 내용을 모두 입력해주세요.');
       return;
     }
 
-    // 글자수 제한 검증
     if (title.length > TITLE_MAX) {
       openModal(`제목은 ${TITLE_MAX}자 이하로 입력해주세요.`);
       return;
@@ -52,7 +49,6 @@ function PostWrite({ posts, setPosts }) {
       return;
     }
 
-    // 작성자는 로그인한 사용자로 자동 저장
     // user_id 를 같이 저장해야 나중에 "본인 글"인지 확인할 수 있음
     const { data, error } = await supabase
       .from('posts')
@@ -74,7 +70,6 @@ function PostWrite({ posts, setPosts }) {
 
     setPosts([data, ...posts]);
 
-    // 확인을 누르면 목록 페이지로 이동하도록 표시하고, 성공 안내 모달을 띄웁니다.
     setGoToListAfterClose(true);
     openModal('등록되었습니다.');
   }

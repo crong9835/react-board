@@ -15,7 +15,6 @@ function Signup() {
   // 모달을 닫은 뒤 로그인 페이지로 이동할지 여부
   const [goToLoginAfterClose, setGoToLoginAfterClose] = useState(false);
 
-  // 안내 문구를 모달로 띄우는 함수
   function openModal(message) {
     setModalMessage(message);
     setIsModalOpen(true);
@@ -32,7 +31,6 @@ function Signup() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    // 이메일 + 비밀번호로 회원가입
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -47,7 +45,6 @@ function Signup() {
     // 사용자가 직접 로그인하도록 세션을 끊어줍니다.
     await supabase.auth.signOut();
 
-    // 확인을 누르면 로그인 페이지로 이동하도록 표시해 둡니다.
     setGoToLoginAfterClose(true);
     openModal('회원가입 완료! 로그인해 주세요.');
   }

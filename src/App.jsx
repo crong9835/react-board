@@ -12,7 +12,9 @@ import './App.css';
 
 function App() {
   const [posts, setPosts] = useState([]);
-  const user = useUser(); // 로그인한 사용자 (없으면 null)
+  // 글 목록을 아직 불러오는 중인지 여부 (처음엔 true = 불러오는 중)
+  const [loading, setLoading] = useState(true);
+  const user = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,9 +26,11 @@ function App() {
 
       if (error) {
         console.log('에러:', error);
+        setLoading(false); // 실패했어도 불러오기 시도는 끝났음
         return;
       }
       setPosts(data);
+      setLoading(false); // 불러오기 완료
     }
 
     fetchPosts();
@@ -46,7 +50,6 @@ function App() {
 
         <div className="auth-menu">
           {user ? (
-            // 로그인한 상태: 이메일 + 로그아웃 버튼
             <>
               <span className="user-email">{user.email}</span>
               <button className="btn" onClick={handleLogout}>
@@ -54,7 +57,6 @@ function App() {
               </button>
             </>
           ) : (
-            // 로그인 안 한 상태: 로그인 + 회원가입 버튼
             <>
               <Link to="/login" className="btn">
                 로그인
@@ -68,7 +70,10 @@ function App() {
       </header>
 
       <Routes>
-        <Route path="/" element={<PostList posts={posts} />} />
+        <Route
+          path="/"
+          element={<PostList posts={posts} loading={loading} />}
+        />
 
         {/* 글쓰기는 로그인해야만 가능. 아니면 로그인 페이지로 보냄 */}
         <Route
@@ -84,10 +89,11 @@ function App() {
 
         <Route
           path="/post/:id"
-          element={<PostDetail posts={posts} setPosts={setPosts} />}
+          element={
+            <PostDetail posts={posts} setPosts={setPosts} loading={loading} />
+          }
         />
 
-        {/* 수정도 로그인해야만 가능 */}
         <Route
           path="/edit/:id"
           element={

@@ -4,7 +4,7 @@ import { supabase } from '../supabase';
 import { useUser } from '../AuthContext';
 import Modal from '../components/Modal';
 
-function PostDetail({ posts, setPosts }) {
+function PostDetail({ posts, setPosts, loading }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const user = useUser(); // 로그인한 사용자 (없으면 null)
@@ -26,6 +26,11 @@ function PostDetail({ posts, setPosts }) {
 
     setPosts(posts.filter((post) => post.id !== Number(id)));
     navigate('/');
+  }
+
+  // 아직 목록을 불러오는 중이면 "없음"이 아니라 "불러오는 중"으로 안내
+  if (loading) {
+    return <p className="empty">불러오는 중...</p>;
   }
 
   if (!post) {

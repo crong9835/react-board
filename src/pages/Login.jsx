@@ -13,7 +13,6 @@ function Login() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
 
-  // 안내 문구를 모달로 띄우는 함수
   function openModal(message) {
     setModalMessage(message);
     setIsModalOpen(true);
@@ -22,7 +21,6 @@ function Login() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    // 이메일 + 비밀번호로 로그인
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -33,7 +31,6 @@ function Login() {
       return;
     }
 
-    // 로그인 성공하면 목록 페이지로 이동
     navigate('/');
   }
 

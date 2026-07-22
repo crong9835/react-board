@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-function PostList({ posts }) {
-  // 지금 보고 있는 페이지 번호 (처음엔 1페이지)
+function PostList({ posts, loading }) {
   const [page, setPage] = useState(1);
-
-  const pageSize = 10; // 한 페이지에 보여줄 글 개수
+  const pageSize = 10;
 
   // 전체 페이지 수 = 글 개수 ÷ 10, 나머지가 있으면 한 페이지 더
   let totalPages = Math.ceil(posts.length / pageSize);
@@ -14,8 +12,8 @@ function PostList({ posts }) {
   }
 
   // 이번 페이지에 보여줄 글만 잘라내기
-  const firstIndex = (page - 1) * pageSize; // 몇 번째 글부터
-  const lastIndex = page * pageSize; // 몇 번째 글까지
+  const firstIndex = (page - 1) * pageSize;
+  const lastIndex = page * pageSize;
   const currentPosts = posts.slice(firstIndex, lastIndex);
 
   // 페이지 버튼에 쓸 번호 목록 만들기 → [1, 2, 3 ...]
@@ -33,7 +31,9 @@ function PostList({ posts }) {
         </Link>
       </div>
 
-      {posts.length === 0 ? (
+      {loading ? (
+        <p className="empty">불러오는 중...</p>
+      ) : posts.length === 0 ? (
         <p className="empty">등록된 글이 없습니다.</p>
       ) : (
         <>
