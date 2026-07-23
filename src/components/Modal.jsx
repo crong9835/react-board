@@ -11,18 +11,13 @@ import { useEffect } from 'react';
 // - confirmText : (선택) 확인 버튼에 쓸 글자. 기본값은 '확인'
 // - cancelText  : (선택) 취소 버튼에 쓸 글자. 기본값은 '취소'
 function Modal({ isOpen, message, onClose, onConfirm, confirmText, cancelText }) {
-  // 모달이 열려 있는 동안 두 가지를 처리합니다.
-  //   1) ESC 키를 누르면 닫습니다.
-  //   2) 뒤쪽 페이지가 스크롤되지 않게 막습니다.
+  // 모달이 열려 있는 동안 ESC 키로 닫고, 뒤쪽 페이지 스크롤을 막습니다.
+  // useEffect 의 return 은 뒷정리 담당이라, 모달이 닫히거나 페이지를 떠날 때
+  // 실행되어 걸어둔 것을 원래대로 되돌립니다.
   //
-  // useEffect 는 "화면에 그려진 뒤에 할 일"을 적는 곳입니다.
-  // return 으로 돌려주는 함수는 정리(뒷정리) 담당이라, 모달이 닫히거나
-  // 페이지를 떠날 때 실행되어 걸어둔 것을 원래대로 되돌립니다.
-  //
-  // 훅(useEffect)은 아래 "닫혀 있으면 그리지 않는다"보다 위에 있어야 합니다.
+  // 이 훅은 아래 "닫혀 있으면 그리지 않는다"보다 위에 있어야 합니다.
   // 훅은 어떤 경우에도 항상 같은 순서로 실행되어야 하기 때문입니다.
   useEffect(() => {
-    // 닫혀 있을 때는 아무것도 걸지 않습니다.
     if (!isOpen) {
       return;
     }
@@ -45,7 +40,6 @@ function Modal({ isOpen, message, onClose, onConfirm, confirmText, cancelText })
     };
   }, [isOpen, onClose]);
 
-  // 닫혀 있으면 화면에 아무것도 그리지 않습니다.
   if (!isOpen) {
     return null;
   }
@@ -54,9 +48,7 @@ function Modal({ isOpen, message, onClose, onConfirm, confirmText, cancelText })
   const isConfirmModal = onConfirm ? true : false;
 
   return (
-    // 화면 전체를 덮는 반투명 배경
     <div className="modal-overlay">
-      {/* 가운데 뜨는 하얀 상자 */}
       <div className="modal-box">
         <p className="modal-message">{message}</p>
 
@@ -68,9 +60,7 @@ function Modal({ isOpen, message, onClose, onConfirm, confirmText, cancelText })
             </button>
           )}
 
-          {/* 확인 버튼
-              - 알림용 모달이면 그냥 닫기(onClose)
-              - 확인용 모달이면 확인 동작(onConfirm) 실행 */}
+          {/* 알림용이면 그냥 닫기(onClose), 확인용이면 확인 동작(onConfirm) */}
           <button
             type="button"
             className="btn btn-primary"

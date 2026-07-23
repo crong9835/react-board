@@ -6,7 +6,7 @@ import Modal from '../components/Modal';
 
 function PostWrite({ posts, setPosts }) {
   const navigate = useNavigate();
-  const user = useUser(); // 로그인한 사용자
+  const user = useUser();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 
@@ -16,9 +16,8 @@ function PostWrite({ posts, setPosts }) {
   // 모달을 닫은 뒤 목록 페이지로 이동할지 여부 (등록 성공했을 때만 true)
   const [goToListAfterClose, setGoToListAfterClose] = useState(false);
 
-  // 서버에 저장을 요청해 놓고 답을 기다리는 중인지 여부.
-  // 이 값이 true 인 동안 등록 버튼을 막아서, 빠르게 두 번 눌렀을 때
-  // 같은 글이 두 개 저장되는 것을 방지합니다.
+  // true 인 동안 등록 버튼을 막습니다. 빠르게 두 번 눌러 같은 글이
+  // 두 개 저장되는 것을 방지하기 위한 값입니다.
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const TITLE_MAX = 30;
@@ -45,10 +44,9 @@ function PostWrite({ posts, setPosts }) {
       return;
     }
 
-    // 여기서부터 서버 응답을 기다립니다. 기다리는 동안 버튼을 막습니다.
     setIsSubmitting(true);
 
-    // user_id 를 같이 저장해야 나중에 "본인 글"인지 확인할 수 있음
+    // user_id 를 같이 저장해야 나중에 "본인 글"인지 확인할 수 있습니다.
     const { data, error } = await supabase
       .from('posts')
       .insert([
@@ -62,16 +60,14 @@ function PostWrite({ posts, setPosts }) {
       .select()
       .single();
 
-    // 응답이 왔으니 버튼을 다시 풀어줍니다.
     // 실패했을 때 다시 시도할 수 있어야 하므로 성공·실패를 가리지 않고 풉니다.
     setIsSubmitting(false);
 
     if (error) {
       console.log('등록 에러:', error);
 
-      // 42501 = DB 의 RLS 정책이 이 저장을 거부했다는 뜻입니다.
+      // 42501 = DB 의 RLS 정책이 이 저장을 거부했다는 뜻으로,
       // 여기서는 "시간당 10개" 작성 빈도 제한에 걸린 경우입니다.
-      // (수정·삭제와 달리 INSERT 거부는 조용히 넘어가지 않고 에러로 옵니다.)
       if (error.code === '42501') {
         openModal('글을 너무 자주 작성하셨습니다. 잠시 후 다시 시도해 주세요.');
       } else {

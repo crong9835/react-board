@@ -1,10 +1,7 @@
 import { Link } from 'react-router-dom';
 
-// 주소창에 없는 주소를 쳤을 때 보여주는 페이지입니다.
-// App.jsx 의 <Route path="*"> 가 이 컴포넌트를 씁니다.
-//
+// 없는 주소를 쳤을 때 보여주는 페이지입니다. App.jsx 의 <Route path="*"> 가 씁니다.
 // 준비 중 페이지(ComingSoon)와 생김새를 맞추려고 같은 .notice 스타일을 씁니다.
-// 다른 점은 이쪽이 "아예 없는 주소"라는 것뿐입니다.
 function NotFound() {
   return (
     <div className="notice">
@@ -22,7 +19,7 @@ function NotFound() {
 
       <div className="center-actions">
         <Link to="/" className="btn btn-primary">
-          글 목록으로
+          목록으로
         </Link>
       </div>
     </div>

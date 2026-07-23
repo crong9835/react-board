@@ -33,8 +33,7 @@ function Login() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    // 서버에 보내기 전에 빈 값부터 걸러냅니다.
-    // trim() 은 앞뒤 공백을 없앤 값이라, 공백만 입력한 경우도 빈 값으로 봅니다.
+    // trim() 으로 앞뒤 공백을 없애서, 공백만 입력한 경우도 빈 값으로 봅니다.
     if (!email.trim() || !password.trim()) {
       openModal('이메일과 비밀번호를 모두 입력해 주세요.');
       return;
@@ -79,7 +78,6 @@ function Login() {
         계정이 없으신가요? <Link to="/signup">회원가입</Link>
       </p>
 
-      {/* 안내용 모달 (확인 버튼 하나) */}
       <Modal
         isOpen={isModalOpen}
         message={modalMessage}

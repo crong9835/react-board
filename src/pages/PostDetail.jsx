@@ -6,9 +6,12 @@ import { formatWriter, formatDate } from '../format';
 import Modal from '../components/Modal';
 
 function PostDetail({ posts, setPosts, loading }) {
+  // 주소에서 꺼낸 값은 항상 문자열('3')이라, 숫자로 바꿔둬야 글의 id 와 비교됩니다.
   const { id } = useParams();
+  const postId = Number(id);
+
   const navigate = useNavigate();
-  const user = useUser(); // 로그인한 사용자 (없으면 null)
+  const user = useUser();
 
   // 목록에서 넘어올 때 주소에 실려 온 페이지 번호 (예: /post/3?page=2 → 2)
   // 주소창으로 상세에 바로 들어와 ?page 가 없으면 1페이지로 돌아갑니다.
@@ -16,35 +19,33 @@ function PostDetail({ posts, setPosts, loading }) {
   const page = Number(searchParams.get('page')) || 1;
   const listPath = `/?page=${page}`;
 
-  // 삭제 확인 모달("정말 삭제하시겠습니까?")이 열려 있는지 여부
+  // 삭제 확인 모달("정말 삭제하시겠습니까?")
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  // 삭제가 실패했을 때 보여줄 안내 모달
-  // 확인 모달과 별개입니다. 확인 모달을 닫고 이 모달을 대신 띄웁니다.
+  // 삭제가 실패했을 때 보여줄 안내 모달. 확인 모달을 닫고 이걸 대신 띄웁니다.
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
 
-  const post = posts.find((post) => post.id === Number(id));
+  const post = posts.find((item) => item.id === postId);
 
-  // 확인 모달을 닫고 안내 모달을 여는 함수
   function showAlert(message) {
     setIsConfirmOpen(false);
     setAlertMessage(message);
     setIsAlertOpen(true);
   }
 
-  // 실제 삭제 처리 (모달에서 "삭제"를 눌렀을 때 실행)
+  // 모달에서 "삭제"를 눌렀을 때 실행
   async function handleDelete() {
-    // 수정과 마찬가지로 .select() 를 붙여야 실제로 몇 건이 지워졌는지 알 수 있습니다.
+    // .select() 를 붙여야 실제로 몇 건이 지워졌는지 알 수 있습니다.
     // 붙이지 않으면 남의 글이라 DB(RLS)가 막아도 error 는 null 이라
     // 지워지지 않았는데 지워진 것처럼 보입니다.
     //
-    // .eq('user_id', ...) 는 DB 의 RLS 와 겹치는 조건이지만,
+    // .eq('user_id', ...) 는 RLS 와 겹치는 조건이지만,
     // "내 글만 지운다"는 의도를 코드에도 드러내기 위해 함께 적습니다.
     const { data, error } = await supabase
       .from('posts')
       .delete()
-      .eq('id', Number(id))
+      .eq('id', postId)
       .eq('user_id', user.id)
       .select();
 
@@ -60,7 +61,7 @@ function PostDetail({ posts, setPosts, loading }) {
       return;
     }
 
-    setPosts(posts.filter((post) => post.id !== Number(id)));
+    setPosts(posts.filter((item) => item.id !== postId));
     navigate(listPath);
   }
 
@@ -73,7 +74,6 @@ function PostDetail({ posts, setPosts, loading }) {
     return <p className="empty">글을 찾을 수 없습니다.</p>;
   }
 
-  // 로그인한 사람이 이 글의 작성자인지 확인
   const isOwner = user && post.user_id === user.id;
 
   return (

@@ -3,34 +3,35 @@ import { useUser } from '../AuthContext';
 import { formatWriter, formatDate } from '../format';
 
 function PostList({ posts, loading }) {
-  const user = useUser(); // 로그인한 사용자 (없으면 null)
+  const user = useUser();
 
-  // 보고 있는 페이지 번호를 컴포넌트 안(useState)이 아니라 주소(?page=2)에 둡니다.
+  // 보고 있는 페이지 번호를 useState 가 아니라 주소(?page=2)에 둡니다.
   // 주소에 있으면 새로고침해도, 뒤로가기를 눌러도, 링크를 복사해서 보내도
   // 같은 페이지가 나옵니다.
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // 한 페이지에 보여줄 글 개수입니다. 이 숫자만 바꾸면 목록 길이가 바뀌고,
-  // 전체 페이지 수와 페이지 버튼도 알아서 따라 계산됩니다.
+  // 한 페이지에 보여줄 글 개수. 이 숫자만 바꾸면 전체 페이지 수와 버튼도 따라옵니다.
   const pageSize = 15;
 
-  // 전체 페이지 수 = 글 개수 ÷ pageSize, 나머지가 있으면 한 페이지 더
   let totalPages = Math.ceil(posts.length / pageSize);
   if (totalPages === 0) {
     totalPages = 1; // 글이 하나도 없어도 1페이지는 있게
   }
 
-  // 주소에서 페이지 번호를 읽습니다.
-  // ?page 가 아예 없으면 Number(null) 이 0 이 되고, ?page=abc 면 NaN 이 됩니다.
-  // 둘 다 거짓 값이라 || 1 이 받아서 1페이지가 됩니다.
-  //
-  // Math.floor 로 소수점을 잘라내는 이유:
-  // ?page=2.7 처럼 소수를 직접 입력하면 2.7 이 그대로 통과해서
-  // 목록을 자르는 위치와 페이지 버튼 번호가 소수가 되어버립니다.
-  // 내림해서 2페이지로 만들어 둡니다. (NaN 은 내림해도 NaN 이라 || 1 이 그대로 받습니다)
-  let page = Math.floor(Number(searchParams.get('page'))) || 1;
+  // 주소에서 페이지 번호를 읽습니다. 주소는 사용자가 직접 고칠 수 있으므로
+  // 이상한 값이 들어와도 괜찮도록 아래에서 한 단계씩 다듬습니다.
+  let page = Number(searchParams.get('page'));
 
-  // ?page=999 처럼 범위를 벗어난 값이 들어오면 빈 목록이 나오므로 보정합니다.
+  // ?page=abc 처럼 숫자가 아니면 Number() 가 NaN 을 돌려줍니다.
+  if (Number.isNaN(page)) {
+    page = 1;
+  }
+
+  // ?page=2.7 처럼 소수가 들어오면 목록을 자르는 위치가 소수가 되므로 내림합니다.
+  page = Math.floor(page);
+
+  // ?page 가 아예 없으면 Number(null) 이 0 이라 여기서 1페이지가 됩니다.
+  // ?page=-3, ?page=999 처럼 범위를 벗어난 값도 여기서 잡힙니다.
   if (page < 1) {
     page = 1;
   }
@@ -38,7 +39,6 @@ function PostList({ posts, loading }) {
     page = totalPages;
   }
 
-  // 페이지 번호를 주소에 적어 넣습니다.
   // setSearchParams 는 방문 기록을 쌓기 때문에 뒤로가기가 이전 페이지로 돌아갑니다.
   function goToPage(nextPage) {
     setSearchParams({ page: String(nextPage) });
@@ -49,19 +49,26 @@ function PostList({ posts, loading }) {
   const lastIndex = page * pageSize;
   const currentPosts = posts.slice(firstIndex, lastIndex);
 
+  // 마지막 페이지는 글이 pageSize 보다 적을 수 있습니다. 그대로 두면 목록 높이가
+  // 줄어들어 페이지를 옮길 때마다 화면이 출렁이므로, 모자란 만큼 빈 줄로 채웁니다.
+  // 페이지가 하나뿐이면 옮겨 다닐 일이 없으므로 채우지 않습니다.
+  const blankRowNumbers = [];
+  if (totalPages > 1) {
+    for (let i = currentPosts.length; i < pageSize; i++) {
+      blankRowNumbers.push(i);
+    }
+  }
+
   // 페이지 버튼에 쓸 번호 목록 만들기.
-  //
-  // 전체 페이지를 다 만들면 글이 많아졌을 때 버튼이 화면을 뒤덮습니다.
-  // (1000개면 버튼 100개) 그래서 지금 보고 있는 페이지를 가운데 두고
-  // 앞뒤로 몇 개씩만 만듭니다. 예) 7페이지에 있으면 5 6 7 8 9
+  // 전체 페이지를 다 만들면 글이 많아졌을 때 버튼이 화면을 뒤덮으므로,
+  // 지금 보고 있는 페이지를 가운데 두고 앞뒤로 몇 개씩만 만듭니다.
+  // 예) 7페이지에 있으면 5 6 7 8 9
   const PAGE_BUTTON_COUNT = 5;
 
-  // 현재 페이지가 가운데 오도록 시작 번호를 잡습니다.
-  // Math.floor(5 / 2) 는 2 이므로, 7페이지면 5부터 시작합니다.
+  // 현재 페이지가 가운데 오도록 시작 번호를 잡습니다. (7페이지면 7 - 2 = 5부터)
   let firstPageNumber = page - Math.floor(PAGE_BUTTON_COUNT / 2);
 
   // 1페이지 근처면 앞으로 더 갈 곳이 없으므로 1부터 시작합니다.
-  // (이걸 끝 번호보다 먼저 해야 버튼 개수가 모자라지 않습니다)
   if (firstPageNumber < 1) {
     firstPageNumber = 1;
   }
@@ -73,7 +80,7 @@ function PostList({ posts, loading }) {
     lastPageNumber = totalPages;
     firstPageNumber = lastPageNumber - PAGE_BUTTON_COUNT + 1;
 
-    // 당기다가 1보다 작아졌으면(전체 페이지가 5개 미만인 경우) 1로 맞춥니다.
+    // 당기다가 1보다 작아졌으면(전체 페이지가 5개 미만) 1로 맞춥니다.
     if (firstPageNumber < 1) {
       firstPageNumber = 1;
     }
@@ -84,33 +91,36 @@ function PostList({ posts, loading }) {
     pageNumbers.push(i);
   }
 
+  // 목록 자리에 셋 중 하나를 보여줍니다. 아래 화면에서 조건을 겹쳐 쓰지 않도록
+  // 여기서 미리 이름을 붙여둡니다.
+  const isEmpty = !loading && posts.length === 0;
+  const hasPosts = !loading && posts.length > 0;
+
   return (
     <div>
       <div className="list-header">
-        {/* 헤더 로고가 이미 "게시판"이라 여기서는 "글 목록"으로 구분합니다. */}
-        <h2>글 목록</h2>
+        <h2>유머 모음집</h2>
         <Link to="/write" className="btn btn-primary">
           글쓰기
         </Link>
       </div>
 
-      {loading ? (
-        <p className="empty">불러오는 중...</p>
-      ) : posts.length === 0 ? (
+      {loading && <p className="empty">불러오는 중...</p>}
+
+      {isEmpty && (
         <div className="empty">
           <p>등록된 글이 없습니다.</p>
-          {/* 로그인한 사람에게만 글쓰기로 가는 안내를 보여줍니다.
-              로그인하지 않았다면 눌러도 로그인 페이지로 튕기므로 소용이 없습니다. */}
-          {user ? (
+          {/* 로그인하지 않았다면 눌러도 로그인 페이지로 튕기므로 보여주지 않습니다. */}
+          {user && (
             <Link to="/write" className="btn btn-primary">
               첫 글 쓰기
             </Link>
-          ) : null}
+          )}
         </div>
-      ) : (
+      )}
+
+      {hasPosts && (
         <>
-          {/* 글 한 줄은 제목 | 작성자 | 작성일 가로 3열입니다.
-              한 줄에 한 글씩만 차지하도록 낮게 잡아 목록이 길어지지 않게 합니다. */}
           <ul className="post-list">
             {/* 각 열이 무엇인지 알려주는 머리글 줄 (클릭 대상이 아님) */}
             <li className="post-list-head">
@@ -132,10 +142,17 @@ function PostList({ posts, loading }) {
                 </Link>
               </li>
             ))}
+
+            {/* 높이만 채우는 빈 줄입니다. 글 줄과 같은 규칙(.post-list-blank)을 써서
+                높이를 똑같이 맞추고, 안에는 눈에 안 보이는 공백 한 칸만 둡니다. */}
+            {blankRowNumbers.map((number) => (
+              <li key={`blank-${number}`} className="post-list-blank">
+                <span className="col-title">&nbsp;</span>
+              </li>
+            ))}
           </ul>
 
           <div className="pagination">
-            {/* 이전 버튼: 1페이지면 못 누르게 */}
             <button
               type="button"
               className="btn"
@@ -145,7 +162,6 @@ function PostList({ posts, loading }) {
               이전
             </button>
 
-            {/* 페이지 번호 버튼들 */}
             {pageNumbers.map((number) => {
               // 지금 보고 있는 페이지면 진하게 표시
               let buttonClass = 'btn';
@@ -165,7 +181,6 @@ function PostList({ posts, loading }) {
               );
             })}
 
-            {/* 다음 버튼: 마지막 페이지면 못 누르게 */}
             <button
               type="button"
               className="btn"

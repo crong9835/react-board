@@ -1,5 +1,4 @@
 // Supabase 인증 에러 메시지(영문)를 한글로 바꿔주는 도우미입니다.
-// 화면에 보이는 안내 문구의 언어를 한글로 통일하기 위해 사용합니다.
 
 // 자주 나오는 에러 메시지를 한글로 정리해 둔 표
 const messageMap = [
@@ -48,7 +47,14 @@ const messageMap = [
 // 에러 객체(또는 메시지)를 받아 한글 문구로 돌려줍니다.
 // 표에 없는 에러는 기본 안내 문구를 보여줍니다.
 export function toKoreanAuthError(error) {
-  const raw = (error && error.message) || String(error || '');
+  // error 는 보통 { message: '...' } 객체지만 문자열이 올 수도 있어 둘 다 받습니다.
+  let raw = '';
+  if (error && error.message) {
+    raw = error.message;
+  } else if (error) {
+    raw = String(error);
+  }
+
   const found = messageMap.find((item) => raw.includes(item.match));
   return found ? found.ko : '문제가 발생했습니다. 잠시 후 다시 시도해 주세요.';
 }

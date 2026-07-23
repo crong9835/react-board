@@ -6,7 +6,6 @@ const AuthContext = createContext({ user: null, loading: true });
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  // 아직 로그인 여부를 확인하는 중인지 (처음엔 true = 확인 중)
   // user 가 null 인 것에는 "로그인 안 함"과 "아직 모름" 두 가지가 섞여 있어서,
   // 이 값으로 둘을 구분합니다.
   const [loading, setLoading] = useState(true);
@@ -15,7 +14,7 @@ export function AuthProvider({ children }) {
     // 1) 앱이 처음 켜질 때, 지금 로그인된 사람이 있는지 확인
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session ? data.session.user : null);
-      setLoading(false); // 확인 끝
+      setLoading(false);
     });
 
     // 2) 로그인/로그아웃이 일어날 때마다 user 값을 자동으로 갱신
@@ -36,8 +35,7 @@ export function AuthProvider({ children }) {
   );
 }
 
-// 어느 컴포넌트에서든 로그인한 사용자를 쉽게 가져오는 함수
-// 로그인 안 했으면 null 을 돌려줍니다.
+// 로그인한 사용자를 가져옵니다. 로그인 안 했으면 null.
 // eslint-disable-next-line react-refresh/only-export-components
 export function useUser() {
   return useContext(AuthContext).user;
