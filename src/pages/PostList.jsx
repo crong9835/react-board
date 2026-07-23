@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { useUser } from '../AuthContext';
 import { formatWriter, formatDate } from '../format';
+import NotFound from './NotFound';
 
 function PostList({ posts, loading }) {
   const user = useUser();
@@ -19,24 +20,35 @@ function PostList({ posts, loading }) {
   }
 
   // 주소에서 페이지 번호를 읽습니다. 주소는 사용자가 직접 고칠 수 있으므로
-  // 이상한 값이 들어와도 괜찮도록 아래에서 한 단계씩 다듬습니다.
-  let page = Number(searchParams.get('page'));
+  // 없는 페이지 번호가 들어오면 목록 대신 404 화면을 보여줍니다.
+  // 몰래 다른 페이지로 보내면 주소와 화면이 서로 다른 말을 하게 되기 때문입니다.
+  const pageParam = searchParams.get('page');
 
-  // ?page=abc 처럼 숫자가 아니면 Number() 가 NaN 을 돌려줍니다.
-  if (Number.isNaN(page)) {
-    page = 1;
+  // ?page 가 아예 없으면(pageParam 이 null) 그냥 1페이지입니다.
+  let page = 1;
+  let isMissingPage = false;
+
+  if (pageParam !== null) {
+    const pageNumber = Number(pageParam);
+
+    // '3' 처럼 1 이상의 정수일 때만 제대로 된 페이지 번호로 봅니다.
+    // 'abc'(Number 가 NaN 을 줌), '2.7'(소수), '0', '-3' 은 모두 없는 페이지입니다.
+    if (Number.isInteger(pageNumber) && pageNumber >= 1) {
+      page = pageNumber;
+    } else {
+      isMissingPage = true;
+    }
   }
 
-  // ?page=2.7 처럼 소수가 들어오면 목록을 자르는 위치가 소수가 되므로 내림합니다.
-  page = Math.floor(page);
-
-  // ?page 가 아예 없으면 Number(null) 이 0 이라 여기서 1페이지가 됩니다.
-  // ?page=-3, ?page=999 처럼 범위를 벗어난 값도 여기서 잡힙니다.
-  if (page < 1) {
-    page = 1;
+  // 전체 페이지 수를 넘어선 번호(?page=231213022)도 없는 페이지입니다.
+  // 단, 아직 불러오는 중이면 posts 가 비어 있어 totalPages 가 1이라
+  // 멀쩡한 3페이지도 없는 페이지로 보입니다. 그래서 다 불러온 뒤에만 따집니다.
+  if (!loading && page > totalPages) {
+    isMissingPage = true;
   }
-  if (page > totalPages) {
-    page = totalPages;
+
+  if (isMissingPage) {
+    return <NotFound />;
   }
 
   // setSearchParams 는 방문 기록을 쌓기 때문에 뒤로가기가 이전 페이지로 돌아갑니다.
