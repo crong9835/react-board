@@ -45,7 +45,7 @@ function Signup() {
       return;
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -55,12 +55,20 @@ function Signup() {
       return;
     }
 
-    // 회원가입 시 Supabase가 세션을 바로 만들어 자동 로그인되는 것을 막고,
-    // 사용자가 직접 로그인하도록 세션을 끊어줍니다.
-    await supabase.auth.signOut();
-
     setGoToLoginAfterClose(true);
-    openModal('회원가입 완료! 로그인해 주세요.');
+
+    // Supabase 의 "Confirm email" 설정이 켜져 있으면 가입만 되고 세션은 만들어지지
+    // 않습니다. 꺼져 있으면 가입과 동시에 로그인된 상태가 됩니다.
+    // 설정을 나중에 다시 바꾸더라도 안내가 어긋나지 않도록, 가정하지 않고
+    // 실제로 세션이 왔는지를 보고 갈라놓습니다.
+    if (data.session) {
+      // 인증이 꺼져 있어 자동 로그인된 경우 — 세션을 끊어 직접 로그인하게 합니다.
+      await supabase.auth.signOut();
+      openModal('회원가입 완료! 로그인해 주세요.');
+      return;
+    }
+
+    openModal('가입 확인 메일을 보냈습니다. 메일함을 확인해 주세요.');
   }
 
   return (
