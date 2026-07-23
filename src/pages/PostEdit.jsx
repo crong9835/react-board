@@ -1,15 +1,53 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import { supabase } from '../supabase';
+import { useUser } from '../AuthContext';
 import Modal from '../components/Modal';
 
-function PostEdit({ posts, setPosts }) {
-  const navigate = useNavigate();
+// 이 파일에는 컴포넌트가 두 개 있습니다.
+//
+// 1) PostEdit     — 글을 보여줘도 되는 상황인지 먼저 확인만 합니다.
+// 2) PostEditForm — 실제 수정 폼. 글(post)이 확실히 있을 때만 화면에 나타납니다.
+//
+// 왜 나눴는가:
+// useState 의 초기값은 그 컴포넌트가 "처음 나타날 때" 딱 한 번만 쓰입니다.
+// 한 컴포넌트로 두면, 새로고침 직후에는 글 목록이 아직 비어 있어서
+// 제목/내용이 빈 문자열('')로 굳어버리고, 나중에 글이 도착해도 폼은 빈 채로 남습니다.
+// 폼을 따로 떼어 두면 글이 도착한 뒤에야 폼이 처음 나타나므로 초기값이 제대로 들어갑니다.
+
+function PostEdit({ posts, setPosts, loading }) {
   const { id } = useParams();
+  const user = useUser(); // 로그인한 사용자 (없으면 null)
+
   const post = posts.find((post) => post.id === Number(id));
 
-  const [title, setTitle] = useState(post ? post.title : '');
-  const [content, setContent] = useState(post ? post.content : '');
+  // 아직 목록을 불러오는 중이면 "없음"이 아니라 "불러오는 중"으로 안내
+  if (loading) {
+    return <p className="empty">불러오는 중...</p>;
+  }
+
+  if (!post) {
+    return <p className="empty">글을 찾을 수 없습니다.</p>;
+  }
+
+  // 남의 글이면 수정 폼을 아예 보여주지 않고 상세 페이지로 되돌립니다.
+  // DB(RLS)가 이미 막고 있으므로 보안이 아니라, 어차피 못 고칠 폼을
+  // 보여주지 않기 위한 처리입니다.
+  // replace 를 쓰면 이 주소가 방문 기록에 남지 않아 뒤로가기가 꼬이지 않습니다.
+  if (!user || post.user_id !== user.id) {
+    return <Navigate to={`/post/${post.id}`} replace />;
+  }
+
+  return <PostEditForm post={post} posts={posts} setPosts={setPosts} />;
+}
+
+function PostEditForm({ post, posts, setPosts }) {
+  const navigate = useNavigate();
+  const user = useUser();
+
+  // 이 컴포넌트는 post 가 확실히 있을 때만 나타나므로 초기값을 바로 쓸 수 있습니다.
+  const [title, setTitle] = useState(post.title);
+  const [content, setContent] = useState(post.content);
 
   // 모달(팝업) 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,7 +67,7 @@ function PostEdit({ posts, setPosts }) {
   function handleModalClose() {
     setIsModalOpen(false);
     if (goToDetailAfterClose) {
-      navigate(`/post/${id}`);
+      navigate(`/post/${post.id}`);
     }
   }
 
@@ -48,10 +86,14 @@ function PostEdit({ posts, setPosts }) {
     // 알 수 없습니다. 남의 글이라 DB(RLS)가 막아도 그건 "에러"가 아니라
     // "0건 수정"이라서 error 는 null 로 옵니다. 그래서 아래 data.length 검사가
     // 없으면 실패를 성공이라고 안내하게 됩니다.
+    //
+    // .eq('user_id', ...) 는 DB 의 RLS 와 겹치는 조건이지만,
+    // "내 글만 고친다"는 의도를 코드에도 드러내기 위해 함께 적습니다.
     const { data, error } = await supabase
       .from('posts')
       .update({ title: title, content: content })
-      .eq('id', Number(id))
+      .eq('id', post.id)
+      .eq('user_id', user.id)
       .select();
 
     if (error) {
@@ -68,7 +110,7 @@ function PostEdit({ posts, setPosts }) {
 
     // DB 가 실제로 저장한 행(data[0])을 그대로 넣습니다.
     // 직접 만든 값이 아니라 저장된 값이라, 화면과 DB 가 어긋날 수 없습니다.
-    setPosts(posts.map((p) => (p.id === Number(id) ? data[0] : p)));
+    setPosts(posts.map((p) => (p.id === post.id ? data[0] : p)));
 
     setGoToDetailAfterClose(true);
     openModal('수정되었습니다.');

@@ -32,10 +32,14 @@ function PostDetail({ posts, setPosts, loading }) {
     // 수정과 마찬가지로 .select() 를 붙여야 실제로 몇 건이 지워졌는지 알 수 있습니다.
     // 붙이지 않으면 남의 글이라 DB(RLS)가 막아도 error 는 null 이라
     // 지워지지 않았는데 지워진 것처럼 보입니다.
+    //
+    // .eq('user_id', ...) 는 DB 의 RLS 와 겹치는 조건이지만,
+    // "내 글만 지운다"는 의도를 코드에도 드러내기 위해 함께 적습니다.
     const { data, error } = await supabase
       .from('posts')
       .delete()
       .eq('id', Number(id))
+      .eq('user_id', user.id)
       .select();
 
     if (error) {

@@ -111,7 +111,7 @@ function App() {
           path="/edit/:id"
           element={
             user ? (
-              <PostEdit posts={posts} setPosts={setPosts} />
+              <PostEdit posts={posts} setPosts={setPosts} loading={loading} />
             ) : (
               <Navigate to="/login" />
             )
