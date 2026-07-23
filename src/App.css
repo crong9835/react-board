@@ -128,6 +128,12 @@ h2 {
   padding: 48px 0;
 }
 
+/* 404 페이지의 "목록으로" 버튼을 가운데에 둡니다. */
+.center-actions {
+  display: flex;
+  justify-content: center;
+}
+
 /* 상세 */
 .detail .writer {
   color: #888;

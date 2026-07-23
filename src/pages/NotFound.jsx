@@ -7,7 +7,7 @@ function NotFound() {
     <div>
       <p className="empty">페이지를 찾을 수 없습니다.</p>
 
-      <div className="form-actions">
+      <div className="center-actions">
         <Link to="/" className="btn">
           목록으로
         </Link>
