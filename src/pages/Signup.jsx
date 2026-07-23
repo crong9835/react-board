@@ -115,7 +115,7 @@ function Signup() {
   }
 
   return (
-    <div>
+    <div className="auth-page">
       <h2>회원가입</h2>
 
       <form className="form" onSubmit={handleSubmit}>

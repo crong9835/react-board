@@ -54,7 +54,7 @@ function Login() {
   }
 
   return (
-    <div>
+    <div className="auth-page">
       <h2>로그인</h2>
 
       <form className="form" onSubmit={handleSubmit}>

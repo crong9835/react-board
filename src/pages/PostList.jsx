@@ -81,7 +81,7 @@ function PostList({ posts, loading }) {
       <div className="list-header">
         {/* 헤더 로고가 이미 "게시판"이라 여기서는 "글 목록"으로 구분합니다. */}
         <h2>글 목록</h2>
-        <Link to="/write" className="btn">
+        <Link to="/write" className="btn btn-primary">
           글쓰기
         </Link>
       </div>
