@@ -57,6 +57,30 @@ function Signup() {
       return;
     }
 
+    // 이메일 형식 검사.
+    //
+    // 입력칸의 type="email" 만으로는 부족합니다. 브라우저의 기본 검사는
+    // 도메인에 점이 있는지를 보지 않아서 1@1 이나 haha@haha 도 통과시킵니다.
+    // 그래서 한 겹 더 봅니다.
+    //
+    // 규칙을 나눠 읽으면 이렇습니다.
+    //   ^[^\s@]+   @ 앞에 공백도 @ 도 아닌 글자가 1자 이상   (예: crong9835)
+    //   @          @ 가 정확히 하나
+    //   [^\s@]+    도메인 이름                                (예: gmail)
+    //   \.         점 하나
+    //   [^\s@]{2,} 점 뒤에 2자 이상                            (예: com)
+    //
+    // 통과: crong9835@gmail.com  /  막힘: 1@1, haha@haha, crong9835@gmail
+    //
+    // 이건 보안이 아니라 오타 방지입니다. gmail.com 을 gmail 로 잘못 적고 가입하면
+    // 나중에 비밀번호 찾기 메일을 받을 수 없기 때문에 미리 잡아줍니다.
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    if (!emailPattern.test(email.trim())) {
+      openModal('올바른 이메일 주소를 입력해 주세요. (예: name@example.com)');
+      return;
+    }
+
     // Supabase 의 기본 최소 길이가 6자입니다.
     // 서버도 막아주지만, 여기서 먼저 알려주는 편이 빠릅니다.
     if (password.length < 6) {
