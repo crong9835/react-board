@@ -122,15 +122,11 @@ function App() {
           }
         />
 
-        {/* 이미 로그인한 사람에게 로그인/회원가입 페이지는 의미가 없으므로 홈으로 보냅니다. */}
-        <Route
-          path="/login"
-          element={user ? <Navigate to="/" replace /> : <Login />}
-        />
-        <Route
-          path="/signup"
-          element={user ? <Navigate to="/" replace /> : <Signup />}
-        />
+        {/* 이미 로그인한 사람을 홈으로 돌려보내는 처리는 각 페이지 안에서 합니다.
+            여기서 user 로 판단하면, 회원가입이 성공해 로그인되는 순간
+            페이지가 사라져서 "회원가입이 완료되었습니다" 모달을 띄울 수 없습니다. */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
 
         {/* 위의 어떤 주소와도 맞지 않을 때 (예: /asdf) 보여줄 페이지 */}
         <Route path="*" element={<NotFound />} />

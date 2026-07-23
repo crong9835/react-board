@@ -1,30 +1,49 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import { useUser } from '../AuthContext';
 import { toKoreanAuthError } from '../authErrors';
 import Modal from '../components/Modal';
 
 function Signup() {
   const navigate = useNavigate();
+  const user = useUser();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   // 모달(팝업) 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
-  // 모달을 닫은 뒤 로그인 페이지로 이동할지 여부
-  const [goToLoginAfterClose, setGoToLoginAfterClose] = useState(false);
+  // 모달을 닫은 뒤 이동할 주소. null 이면 그냥 닫기만 합니다.
+  const [pathAfterClose, setPathAfterClose] = useState(null);
+
+  // 이 페이지에 처음 들어온 순간 이미 로그인 상태였는지 기억해 둡니다.
+  //
+  // useState 의 초기값은 처음 한 번만 쓰이고 그 뒤로는 바뀌지 않습니다.
+  // 그래서 가입에 성공해 로그인되더라도 이 값은 false 그대로입니다.
+  // 덕분에 "원래 로그인한 사람이 들어온 경우"와 "방금 가입해서 로그인된 경우"를
+  // 구분할 수 있습니다.
+  //
+  // 이 구분이 없으면, 가입 성공으로 user 가 채워지는 순간 이 페이지가 사라져서
+  // "회원가입이 완료되었습니다" 모달이 화면에 나타나지도 못하고 끝납니다.
+  const [wasAlreadyLoggedIn] = useState(user !== null);
+
+  // 원래 로그인한 사람이 주소창으로 들어온 경우에만 목록으로 돌려보냅니다.
+  if (wasAlreadyLoggedIn) {
+    return <Navigate to="/" replace />;
+  }
 
   function openModal(message) {
     setModalMessage(message);
     setIsModalOpen(true);
   }
 
-  // 모달을 닫을 때 실행. 회원가입 성공이었으면 로그인 페이지로 이동합니다.
+  // 모달을 닫을 때 실행. 갈 곳이 정해져 있으면 그리로 이동합니다.
   function handleModalClose() {
     setIsModalOpen(false);
-    if (goToLoginAfterClose) {
-      navigate('/login');
+    if (pathAfterClose) {
+      navigate(pathAfterClose);
     }
   }
 
@@ -55,19 +74,19 @@ function Signup() {
       return;
     }
 
-    setGoToLoginAfterClose(true);
-
     // Supabase 의 "Confirm email" 설정이 켜져 있으면 가입만 되고 세션은 만들어지지
     // 않습니다. 꺼져 있으면 가입과 동시에 로그인된 상태가 됩니다.
-    // 설정을 나중에 다시 바꾸더라도 안내가 어긋나지 않도록, 가정하지 않고
+    // 설정을 나중에 바꾸더라도 안내가 어긋나지 않도록, 가정하지 않고
     // 실제로 세션이 왔는지를 보고 갈라놓습니다.
     if (data.session) {
-      // 인증이 꺼져 있어 자동 로그인된 경우 — 세션을 끊어 직접 로그인하게 합니다.
-      await supabase.auth.signOut();
-      openModal('회원가입 완료! 로그인해 주세요.');
+      // 인증이 꺼져 있는 경우 — 이미 로그인된 상태이므로 그대로 두고 목록으로 갑니다.
+      setPathAfterClose('/');
+      openModal('회원가입이 완료되었습니다.');
       return;
     }
 
+    // 인증이 켜져 있는 경우 — 메일로 확인을 마친 뒤 직접 로그인해야 합니다.
+    setPathAfterClose('/login');
     openModal('가입 확인 메일을 보냈습니다. 메일함을 확인해 주세요.');
   }
 
