@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabase';
 import { Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
-import { useUser } from './AuthContext';
+import { useUser, useAuthLoading } from './AuthContext';
 import PostList from './pages/PostList';
 import PostWrite from './pages/PostWrite';
 import PostDetail from './pages/PostDetail';
@@ -15,6 +15,8 @@ function App() {
   // 글 목록을 아직 불러오는 중인지 여부 (처음엔 true = 불러오는 중)
   const [loading, setLoading] = useState(true);
   const user = useUser();
+  // 로그인 여부를 아직 확인하는 중인지
+  const authLoading = useAuthLoading();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,6 +41,17 @@ function App() {
   async function handleLogout() {
     await supabase.auth.signOut();
     navigate('/');
+  }
+
+  // 로그인 여부를 아직 모르는 동안에는 화면을 그리지 않는다.
+  // (모르는 상태로 그리면 /write 같은 보호 라우트가 "로그인 안 함"으로 잘못 판정해서
+  //  로그인 페이지로 튕겨버림)
+  if (authLoading) {
+    return (
+      <div className="app">
+        <p className="empty">불러오는 중...</p>
+      </div>
+    );
   }
 
   return (
