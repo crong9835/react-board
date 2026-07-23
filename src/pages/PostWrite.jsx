@@ -40,15 +40,6 @@ function PostWrite({ posts, setPosts }) {
       return;
     }
 
-    if (title.length > TITLE_MAX) {
-      openModal(`제목은 ${TITLE_MAX}자 이하로 입력해주세요.`);
-      return;
-    }
-    if (content.length > CONTENT_MAX) {
-      openModal(`내용은 ${CONTENT_MAX}자 이하로 입력해주세요.`);
-      return;
-    }
-
     // user_id 를 같이 저장해야 나중에 "본인 글"인지 확인할 수 있음
     const { data, error } = await supabase
       .from('posts')
@@ -64,7 +55,16 @@ function PostWrite({ posts, setPosts }) {
       .single();
 
     if (error) {
-      console.log('에러:', error);
+      console.log('등록 에러:', error);
+
+      // 42501 = DB 의 RLS 정책이 이 저장을 거부했다는 뜻입니다.
+      // 여기서는 "시간당 10개" 작성 빈도 제한에 걸린 경우입니다.
+      // (수정·삭제와 달리 INSERT 거부는 조용히 넘어가지 않고 에러로 옵니다.)
+      if (error.code === '42501') {
+        openModal('글을 너무 자주 작성하셨습니다. 잠시 후 다시 시도해 주세요.');
+      } else {
+        openModal('등록에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      }
       return;
     }
 

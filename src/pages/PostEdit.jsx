@@ -41,15 +41,6 @@ function PostEdit({ posts, setPosts }) {
       return;
     }
 
-    if (title.length > TITLE_MAX) {
-      openModal(`제목은 ${TITLE_MAX}자 이하로 입력해주세요.`);
-      return;
-    }
-    if (content.length > CONTENT_MAX) {
-      openModal(`내용은 ${CONTENT_MAX}자 이하로 입력해주세요.`);
-      return;
-    }
-
     // 제목과 내용만 수정 (작성자는 바뀌지 않음)
     //
     // .select() 를 꼭 붙여야 합니다.
