@@ -34,6 +34,14 @@ const messageMap = [
     match: 'invalid format',
     ko: '이메일 형식이 올바르지 않습니다.',
   },
+  // 가입할 때 DB 트리거가 profiles 에 닉네임 줄을 만드는데, 그게 실패하면
+  // Supabase 는 이 문구로 답합니다. 여기서 실패하는 이유는 사실상 닉네임 중복
+  // 하나뿐입니다. (가입 직전 중복 검사를 통과한 뒤, 같은 순간에 다른 사람이
+  // 같은 닉네임으로 먼저 가입해버린 드문 경우)
+  {
+    match: 'Database error saving new user',
+    ko: '이미 사용 중인 닉네임입니다. 다른 닉네임으로 다시 시도해 주세요.',
+  },
   {
     match: 'For security purposes',
     ko: '요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요.',

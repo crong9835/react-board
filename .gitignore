@@ -33,3 +33,6 @@ dist-ssr
 
 #claude
 .claude
+
+# Supabase SQL (대시보드에 직접 실행하는 파일이라 깃에는 올리지 않습니다)
+supabase

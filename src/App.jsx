@@ -8,8 +8,7 @@ import {
   Navigate,
   useNavigate,
 } from 'react-router-dom';
-import { useUser, useAuthLoading } from './AuthContext';
-import { formatWriter } from './format';
+import { useUser, useNickname, useAuthLoading } from './AuthContext';
 import PostList from './pages/PostList';
 import PostWrite from './pages/PostWrite';
 import PostDetail from './pages/PostDetail';
@@ -33,6 +32,7 @@ function App() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const user = useUser();
+  const nickname = useNickname();
   const authLoading = useAuthLoading();
   const navigate = useNavigate();
 
@@ -108,7 +108,7 @@ function App() {
           <div className="auth-menu">
             {user ? (
               <>
-                <span className="user-email">{formatWriter(user.email)}</span>
+                <span className="user-email">{nickname}</span>
                 <button className="btn" onClick={handleLogout}>
                   로그아웃
                 </button>

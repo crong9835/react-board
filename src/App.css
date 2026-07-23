@@ -455,6 +455,16 @@ h2 {
   box-shadow: var(--focus-ring);
 }
 
+/* 입력칸 아래에 붙이는 짧은 안내 문구 (예: 닉네임은 나중에 바꿀 수 없습니다)
+   .form 의 gap 만큼 벌어지면 어느 입력칸에 대한 설명인지 헷갈리므로,
+   위쪽 여백을 음수로 당겨 바로 위 칸에 붙여 둡니다. */
+.form-hint {
+  margin: -4px 2px 2px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
 /* 글자수 카운터 (제목/내용 입력 아래 표시) */
 .char-count {
   margin: -6px 2px 0;

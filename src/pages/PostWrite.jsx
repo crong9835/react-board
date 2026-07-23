@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { supabase } from '../supabase';
-import { useUser } from '../AuthContext';
+import { useUser, useNickname } from '../AuthContext';
 import Modal from '../components/Modal';
 
 function PostWrite({ posts, setPosts }) {
   const navigate = useNavigate();
   const user = useUser();
+  const nickname = useNickname();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 
@@ -47,13 +48,18 @@ function PostWrite({ posts, setPosts }) {
     setIsSubmitting(true);
 
     // user_id 를 같이 저장해야 나중에 "본인 글"인지 확인할 수 있습니다.
+    //
+    // writer 에는 이메일이 아니라 닉네임을 저장합니다.
+    // 글 목록은 로그인하지 않은 사람도 읽을 수 있어서(RLS 의 조회 정책이 누구나 허용),
+    // 이메일을 저장해 두면 개발자도구 네트워크 탭에서 가입자 이메일을 그대로 볼 수
+    // 있습니다. 화면에서만 가려서는 막을 수 없고, 애초에 DB 에 넣지 않아야 합니다.
     const { data, error } = await supabase
       .from('posts')
       .insert([
         {
           title,
           content,
-          writer: user.email,
+          writer: nickname,
           user_id: user.id,
         },
       ])
@@ -108,7 +114,10 @@ function PostWrite({ posts, setPosts }) {
           {content.length} / {CONTENT_MAX}
         </p>
         <div className="form-actions">
-          <button type="button" className="btn" onClick={() => navigate(-1)}>
+          {/* navigate(-1) 은 "브라우저 뒤로가기"와 같아서, 주소창에 /write 를 직접
+              쳐서 들어온 경우 앞 기록이 다른 사이트라 거기로 나가버립니다.
+              갈 곳을 목록으로 못 박아 두면 어떤 경로로 들어왔든 목록으로 갑니다. */}
+          <button type="button" className="btn" onClick={() => navigate('/')}>
             취소
           </button>
 

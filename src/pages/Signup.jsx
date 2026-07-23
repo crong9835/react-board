@@ -10,6 +10,7 @@ function Signup() {
   const user = useUser();
 
   const [email, setEmail] = useState('');
+  const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
 
   // 모달(팝업) 상태
@@ -40,10 +41,14 @@ function Signup() {
   }
 
   // 모달을 닫을 때 실행. 갈 곳이 정해져 있으면 그리로 이동합니다.
+  //
+  // replace 는 "방문 기록에 새로 쌓지 말고 지금 자리를 대신 차지하라"는 뜻입니다.
+  // 가입을 마친 뒤에는 이 페이지로 돌아올 일이 없으므로, 기록에서 아예 지워
+  // 뒤로가기를 눌렀을 때 가입 폼이 다시 나타나지 않게 합니다.
   function handleModalClose() {
     setIsModalOpen(false);
     if (pathAfterClose) {
-      navigate(pathAfterClose);
+      navigate(pathAfterClose, { replace: true });
     }
   }
 
@@ -51,8 +56,10 @@ function Signup() {
     event.preventDefault();
 
     // trim() 으로 앞뒤 공백을 없애서, 공백만 입력한 경우도 빈 값으로 봅니다.
-    if (!email.trim() || !password.trim()) {
-      openModal('이메일과 비밀번호를 모두 입력해 주세요.');
+    const trimmedNickname = nickname.trim();
+
+    if (!email.trim() || !trimmedNickname || !password.trim()) {
+      openModal('이메일, 비밀번호, 닉네임을 모두 입력해 주세요.');
       return;
     }
 
@@ -81,13 +88,77 @@ function Signup() {
       return;
     }
 
+    // 닉네임 형식 검사.
+    //   [가-힣a-zA-Z0-9]  한글·영문·숫자만 (공백과 특수문자는 받지 않습니다)
+    //   {2,10}            2자 이상 10자 이하
+    //
+    // 특수문자를 막는 데는 이유가 하나 더 있습니다. 아래 중복 검사에 쓰는 ilike 는
+    // % 와 _ 를 "아무 글자" 라는 뜻으로 해석해서, 그대로 두면 %% 같은 닉네임이
+    // 남의 닉네임까지 걸려버립니다.
+    const nicknamePattern = /^[가-힣a-zA-Z0-9]{2,10}$/;
+
+    if (!nicknamePattern.test(trimmedNickname)) {
+      openModal('닉네임은 한글·영문·숫자로 2~10자로 입력해 주세요.');
+      return;
+    }
+
+    // 닉네임이 이미 쓰이고 있는지 확인합니다.
+    //   ilike       대소문자를 가리지 않고 비교합니다. (crong 과 Crong 을 같게 봄)
+    //   maybeSingle 한 줄만 가져오되, 없으면 에러 대신 null 을 줍니다.
+    //
+    // 이 검사만으로 완전히 막히지는 않습니다. 두 사람이 같은 순간에 같은 닉네임으로
+    // 가입을 누르면 둘 다 "비어 있음" 으로 통과할 수 있습니다.
+    // 마지막으로 막는 것은 DB 에 걸어둔 unique 제약이고, 여기서는 흔한 경우를
+    // 미리 걸러 안내를 친절하게 하는 것이 목적입니다.
+    const { data: sameNickname, error: nicknameError } = await supabase
+      .from('profiles')
+      .select('id')
+      .ilike('nickname', trimmedNickname)
+      .maybeSingle();
+
+    if (nicknameError) {
+      console.log('닉네임 확인 에러:', nicknameError);
+      openModal('닉네임을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
+
+    if (sameNickname) {
+      openModal('이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해 주세요.');
+      return;
+    }
+
+    // options.data 에 넣은 값은 계정 정보에 함께 저장됩니다.
+    // DB 에 걸어둔 트리거가 가입 직후 이 값을 읽어 profiles 표에 닉네임 줄을 만듭니다.
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: { nickname: trimmedNickname },
+      },
     });
 
     if (error) {
       openModal('회원가입 실패: ' + toKoreanAuthError(error));
+      return;
+    }
+
+    // 이미 가입된 이메일인지 확인합니다.
+    //
+    // "이 이메일은 이미 가입돼 있습니다" 라고 그대로 알려주면, 아무나 이메일을
+    // 하나씩 넣어보며 누가 이 사이트에 가입했는지 알아낼 수 있습니다.
+    // 그래서 Supabase 는 "Confirm email" 설정이 켜져 있을 때, 이미 있는 이메일로
+    // 가입을 시도해도 에러를 주지 않고 성공한 것처럼 응답합니다.
+    //
+    // 다만 이때는 identities(그 계정에 연결된 로그인 수단 목록)가 빈 배열로 옵니다.
+    // 진짜 새 계정이라면 방금 만든 이메일 로그인 수단이 하나 들어 있습니다.
+    // 이 차이로 둘을 구분할 수 있습니다.
+    //
+    // 이 검사가 없으면 이미 가입된 이메일로 또 가입했을 때
+    // "가입 확인 메일을 보냈습니다" 라고 잘못 안내하게 됩니다.
+    const identities = data.user ? data.user.identities : null;
+
+    if (identities && identities.length === 0) {
+      openModal('회원가입 실패: 이미 가입된 이메일입니다.');
       return;
     }
 
@@ -123,6 +194,16 @@ function Signup() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        <input
+          type="text"
+          placeholder="닉네임 (한글·영문·숫자 2~10자)"
+          value={nickname}
+          maxLength={10}
+          onChange={(e) => setNickname(e.target.value)}
+        />
+        <p className="form-hint">
+          닉네임은 글쓴이 이름으로 표시되며, 가입 후에는 변경할 수 없습니다.
+        </p>
         <button type="submit" className="btn btn-primary">
           회원가입
         </button>

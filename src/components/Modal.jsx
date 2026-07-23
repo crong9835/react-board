@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 // 여러 페이지에서 돌려 쓰는 모달(팝업) 컴포넌트입니다.
 //
@@ -47,7 +48,18 @@ function Modal({ isOpen, message, onClose, onConfirm, confirmText, cancelText })
   // onConfirm 함수가 넘어왔으면 "확인용(취소+확인)" 모달입니다.
   const isConfirmModal = onConfirm ? true : false;
 
-  return (
+  // createPortal 은 "이 화면을 여기 말고 저기에 그려라" 라는 뜻입니다.
+  // 여기서는 이 컴포넌트를 쓴 자리(카드 안)가 아니라 문서 맨 바깥(body)에 그립니다.
+  //
+  // 왜 이렇게 하냐면, 어두운 막(.modal-overlay)은 position: fixed 로
+  // "화면 전체"를 덮게 해뒀는데, 조상 중에 transform 이 걸린 요소가 하나라도 있으면
+  // 그 요소가 fixed 의 기준이 되어버립니다. 즉 화면이 아니라 그 요소만 덮습니다.
+  //
+  // .card 에 등장 애니메이션(card-rise)이 걸려 있고 끝난 뒤에도 마지막 상태를
+  // 유지하도록(both) 해둬서, 카드에는 transform 이 계속 남아 있습니다.
+  // 그래서 모달을 카드 안에 두면 막이 카드 크기로 쪼그라들고 모달도 화면 중앙이 아니라
+  // 카드 중앙에 뜹니다. body 로 빼내면 위에 무엇이 있든 영향을 받지 않습니다.
+  return createPortal(
     <div className="modal-overlay">
       <div className="modal-box">
         <p className="modal-message">{message}</p>
@@ -70,7 +82,8 @@ function Modal({ isOpen, message, onClose, onConfirm, confirmText, cancelText })
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

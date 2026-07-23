@@ -167,7 +167,15 @@ function PostEditForm({ post, posts, setPosts, detailPath }) {
           {content.length} / {CONTENT_MAX}
         </p>
         <div className="form-actions">
-          <button type="button" className="btn" onClick={() => navigate(-1)}>
+          {/* navigate(-1) 은 "브라우저 뒤로가기"와 같아서, 주소창에 /edit/3 을 직접
+              쳐서 들어온 경우 앞 기록이 다른 사이트라 거기로 나가버립니다.
+              갈 곳을 상세 페이지로 못 박아 두면 어떤 경로로 들어왔든 상세로 갑니다.
+              detailPath 에는 보던 페이지 번호(?page=2)도 들어 있습니다. */}
+          <button
+            type="button"
+            className="btn"
+            onClick={() => navigate(detailPath)}
+          >
             취소
           </button>
 

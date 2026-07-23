@@ -5,9 +5,10 @@ React + Vite + Supabase로 만든 간단한 게시판입니다.
 
 ## 주요 기능
 
-- 게시글 목록 (10개씩 페이지네이션)
+- 게시글 목록 (15개씩 페이지네이션)
 - 게시글 작성 / 상세 보기 / 수정 / 삭제
 - 이메일 회원가입 · 로그인 (Supabase Auth)
+- 닉네임 (가입 시 지정, 중복 불가, 변경 불가)
 - 본인 글만 수정/삭제 가능 (작성자 확인)
 - 제목·내용 빈 값 검증 및 글자수 제한(제목 30자, 내용 500자)
 - 인증 에러 메시지 한글 안내
@@ -22,18 +23,27 @@ React + Vite + Supabase로 만든 간단한 게시판입니다.
 
 ```
 src/
-├─ App.jsx           # 라우팅 + 헤더 + 게시글 목록 상태 관리
-├─ main.jsx          # 진입점 (Router / AuthProvider 설정)
-├─ AuthContext.jsx   # 로그인 사용자 정보 Context
-├─ authErrors.js     # Supabase 인증 에러 → 한글 메시지 변환
-├─ supabase.js       # Supabase 클라이언트 생성
+├─ App.jsx            # 라우팅 + 헤더 + 게시글 목록 상태 관리
+├─ main.jsx           # 진입점 (Router / AuthProvider 설정)
+├─ AuthContext.jsx    # 로그인 사용자 정보 Context
+├─ authErrors.js      # Supabase 인증 에러 → 한글 메시지 변환
+├─ format.js          # 작성자·날짜 표시 형식 변환
+├─ supabase.js        # Supabase 클라이언트 생성
+├─ components/
+│  └─ Modal.jsx       # 안내용 / 확인용 모달
 └─ pages/
-   ├─ PostList.jsx   # 목록 + 페이지네이션
-   ├─ PostWrite.jsx  # 글쓰기
-   ├─ PostDetail.jsx # 상세 보기 + 삭제
-   ├─ PostEdit.jsx   # 글 수정
-   ├─ Login.jsx      # 로그인
-   └─ Signup.jsx     # 회원가입
+   ├─ PostList.jsx    # 목록 + 페이지네이션
+   ├─ PostWrite.jsx   # 글쓰기
+   ├─ PostDetail.jsx  # 상세 보기 + 삭제
+   ├─ PostEdit.jsx    # 글 수정
+   ├─ Login.jsx       # 로그인
+   ├─ Signup.jsx      # 회원가입
+   ├─ ComingSoon.jsx  # 아직 만들지 않은 메뉴 안내
+   └─ NotFound.jsx    # 없는 주소 안내
+
+supabase/
+├─ policy.sql         # posts 테이블 RLS 정책 기록 (실제 설정은 Supabase 대시보드)
+└─ profiles.sql       # profiles 테이블 · 닉네임 자동 생성 트리거
 ```
 
 ## 로컬 실행 방법
