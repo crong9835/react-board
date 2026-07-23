@@ -31,6 +31,20 @@ function Signup() {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    // 서버에 보내기 전에 빈 값부터 걸러냅니다.
+    // trim() 은 앞뒤 공백을 없앤 값이라, 공백만 입력한 경우도 빈 값으로 봅니다.
+    if (!email.trim() || !password.trim()) {
+      openModal('이메일과 비밀번호를 모두 입력해 주세요.');
+      return;
+    }
+
+    // Supabase 의 기본 최소 길이가 6자입니다.
+    // 서버도 막아주지만, 여기서 먼저 알려주는 편이 빠릅니다.
+    if (password.length < 6) {
+      openModal('비밀번호는 6자 이상으로 입력해 주세요.');
+      return;
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
