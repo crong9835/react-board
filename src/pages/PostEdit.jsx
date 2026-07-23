@@ -1,4 +1,9 @@
-import { useNavigate, useParams, Navigate } from 'react-router-dom';
+import {
+  useNavigate,
+  useParams,
+  useSearchParams,
+  Navigate,
+} from 'react-router-dom';
 import { useState } from 'react';
 import { supabase } from '../supabase';
 import { useUser } from '../AuthContext';
@@ -21,6 +26,11 @@ function PostEdit({ posts, setPosts, loading }) {
 
   const post = posts.find((post) => post.id === Number(id));
 
+  // 상세 페이지에서 실려 온 페이지 번호. 수정을 마치고 상세로 돌아갈 때
+  // 그대로 달고 가야 거기서 "목록으로"를 눌렀을 때 보던 페이지로 돌아갑니다.
+  const [searchParams] = useSearchParams();
+  const page = Number(searchParams.get('page')) || 1;
+
   // 아직 목록을 불러오는 중이면 "없음"이 아니라 "불러오는 중"으로 안내
   if (loading) {
     return <p className="empty">불러오는 중...</p>;
@@ -34,14 +44,23 @@ function PostEdit({ posts, setPosts, loading }) {
   // DB(RLS)가 이미 막고 있으므로 보안이 아니라, 어차피 못 고칠 폼을
   // 보여주지 않기 위한 처리입니다.
   // replace 를 쓰면 이 주소가 방문 기록에 남지 않아 뒤로가기가 꼬이지 않습니다.
+  const detailPath = `/post/${post.id}?page=${page}`;
+
   if (!user || post.user_id !== user.id) {
-    return <Navigate to={`/post/${post.id}`} replace />;
+    return <Navigate to={detailPath} replace />;
   }
 
-  return <PostEditForm post={post} posts={posts} setPosts={setPosts} />;
+  return (
+    <PostEditForm
+      post={post}
+      posts={posts}
+      setPosts={setPosts}
+      detailPath={detailPath}
+    />
+  );
 }
 
-function PostEditForm({ post, posts, setPosts }) {
+function PostEditForm({ post, posts, setPosts, detailPath }) {
   const navigate = useNavigate();
   const user = useUser();
 
@@ -67,7 +86,7 @@ function PostEditForm({ post, posts, setPosts }) {
   function handleModalClose() {
     setIsModalOpen(false);
     if (goToDetailAfterClose) {
-      navigate(`/post/${post.id}`);
+      navigate(detailPath);
     }
   }
 

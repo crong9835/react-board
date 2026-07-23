@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useState } from 'react';
 import { supabase } from '../supabase';
 import { useUser } from '../AuthContext';
@@ -9,6 +9,12 @@ function PostDetail({ posts, setPosts, loading }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const user = useUser(); // 로그인한 사용자 (없으면 null)
+
+  // 목록에서 넘어올 때 주소에 실려 온 페이지 번호 (예: /post/3?page=2 → 2)
+  // 주소창으로 상세에 바로 들어와 ?page 가 없으면 1페이지로 돌아갑니다.
+  const [searchParams] = useSearchParams();
+  const page = Number(searchParams.get('page')) || 1;
+  const listPath = `/?page=${page}`;
 
   // 삭제 확인 모달("정말 삭제하시겠습니까?")이 열려 있는지 여부
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -55,7 +61,7 @@ function PostDetail({ posts, setPosts, loading }) {
     }
 
     setPosts(posts.filter((post) => post.id !== Number(id)));
-    navigate('/');
+    navigate(listPath);
   }
 
   // 아직 목록을 불러오는 중이면 "없음"이 아니라 "불러오는 중"으로 안내
@@ -80,15 +86,18 @@ function PostDetail({ posts, setPosts, loading }) {
       <p className="content">{post.content}</p>
 
       <div className="actions">
-        {/* 왼쪽: 목록으로 (뒤로가기) */}
-        <button className="btn" onClick={() => navigate('/')}>
+        {/* 왼쪽: 목록으로 — 보고 있던 페이지 번호를 그대로 달고 돌아갑니다 */}
+        <button className="btn" onClick={() => navigate(listPath)}>
           목록으로
         </button>
 
         {/* 오른쪽: 본인 글일 때만 보이는 수정/삭제 */}
         {isOwner && (
           <div className="actions-right">
-            <button className="btn" onClick={() => navigate(`/edit/${id}`)}>
+            <button
+              className="btn"
+              onClick={() => navigate(`/edit/${id}?page=${page}`)}
+            >
               수정하기
             </button>
             <button
