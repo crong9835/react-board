@@ -1,21 +1,41 @@
 /* 화면별 스타일입니다.
-   색·둥글기·그림자 값은 index.css 의 :root 에 모아두고 var(--이름) 으로 꺼내 씁니다. */
+   색·둥글기·그림자·그라데이션 값은 index.css 의 :root 에 모아두고
+   var(--이름) 으로 꺼내 씁니다. */
 
-.app {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 48px 20px 80px;
+/* ── 전체 뼈대 ───────────────────────────────────────────────
+   .page 를 세로 방향 flex 로 만들고 .app 에 flex: 1 을 주면,
+   내용이 짧아도 .app 이 남는 높이를 전부 차지합니다.
+   그래서 푸터가 항상 화면 아래쪽에 붙어 화면이 비어 보이지 않습니다. */
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-/* ── 헤더 (로고 + 로그인 메뉴) ───────────────────────────── */
+/* ── 헤더 (화면 전체 폭을 쓰는 띠) ─────────────────────────
+   유리 느낌으로 만듭니다.
+   - 배경을 반투명 흰색으로 두고
+   - backdrop-filter: blur 로 뒤에 있는 것을 흐리게 비칩니다.
+   sticky 라서 스크롤을 내려도 화면 맨 위에 붙어 있습니다. */
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-line);
+}
+
+/* 띠는 화면 끝까지 가되, 안쪽 내용은 본문과 같은 폭으로 맞춥니다. */
+/* 왼쪽부터 [로고] [메뉴] ......... [로그인 메뉴] 순서로 놓습니다.
+   가운데를 벌리는 일은 아래 .nav 의 margin-right: auto 가 합니다. */
+.header-inner {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 12px 24px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 0 0 36px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--color-border);
+  gap: 28px;
 }
 
 .header .logo {
@@ -25,34 +45,138 @@
 
 .header h1 {
   margin: 0;
-  font-size: 22px;
+  font-size: 20px;
+  font-weight: 800;
+  /* 글자 사이를 좁히면 로고가 단단하게 뭉쳐 보입니다. */
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+
+  /* 로고 글자에 그라데이션을 입힙니다.
+     background-clip: text 는 배경을 글자 모양대로 오려내라는 뜻이고,
+     color: transparent 로 원래 글자색을 투명하게 해야 그 배경이 비칩니다.
+     둘을 같이 써야 "글자 안쪽이 보라 그라데이션"이 됩니다. */
+  background-image: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── 네비게이션 메뉴 ─────────────────────────────────────────
+   margin-right: auto 가 남는 가로 공간을 전부 오른쪽으로 밀어냅니다.
+   그래서 메뉴는 로고 옆에 붙고, 로그인 메뉴만 오른쪽 끝으로 갑니다. */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: auto;
+}
+
+/* 메뉴 하나.
+   position: relative 는 아래 ::after(밑줄 막대)를 이 메뉴를 기준으로
+   놓기 위한 것입니다. */
+.nav-link {
+  position: relative;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.nav-link:hover {
+  background-color: var(--brand-soft);
+  color: var(--brand-1);
+}
+
+/* 지금 보고 있는 메뉴 */
+.nav-link-active {
+  color: var(--brand-1);
   font-weight: 700;
-  /* 글자 사이를 살짝 좁히면 제목이 단단해 보입니다. */
-  letter-spacing: -0.02em;
+}
+
+/* 지금 보고 있는 메뉴 아래에 보라 그라데이션 밑줄을 깔아줍니다.
+   left/right 를 12px 씩 띄운 것은, 글자 폭에 맞추고 좌우 여백은 빼기 위해서입니다. */
+.nav-link-active::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background-image: var(--brand-gradient);
 }
 
 .auth-menu {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .user-email {
   color: var(--color-text-muted);
-  font-size: 14px;
+  font-size: 13px;
   /* 이름이 길어도 메뉴를 밀어내지 않게 잘라줍니다. */
-  max-width: 140px;
+  max-width: 130px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* ── 본문 영역 ─────────────────────────────────────────────
+   justify-content: center 가 내용을 세로 가운데로 보냅니다.
+   내용이 짧아도 화면 위쪽에만 붙어 있지 않고 가운데에 자리잡습니다.
+
+   내용이 화면보다 길어지면 어떻게 되는가:
+   .page 는 height 가 아니라 min-height 라서 내용만큼 늘어납니다.
+   늘어나면 가운데로 밀 남는 공간이 없어지므로, 위가 잘리는 일 없이
+   그냥 위에서부터 차례로 쌓입니다. */
+.app {
+  flex: 1; /* 헤더를 뺀 나머지 높이를 전부 차지 */
+  width: 100%;
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 28px 24px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* 배경 위에 떠 있는 흰 카드 */
+.card {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: 30px 34px;
+  box-shadow: var(--shadow-card);
+
+  /* 화면이 뜰 때 아래에서 살짝 올라오며 나타납니다. */
+  animation: card-rise 0.35s ease both;
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ── 공통 제목 ───────────────────────────────────────────── */
 h2 {
-  margin: 0 0 20px;
-  font-size: 19px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 /* ── 목록 ────────────────────────────────────────────────── */
@@ -61,64 +185,87 @@ h2 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .list-header h2 {
   margin: 0;
 }
 
-/* 목록 전체를 테두리로 감싸 하나의 덩어리로 보이게 합니다.
-   overflow: hidden 을 줘야 안쪽 첫 줄·마지막 줄이 둥근 모서리를 넘지 않습니다. */
 .post-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  overflow: hidden;
 }
 
-.post-list li {
-  border-bottom: 1px solid var(--color-border);
-}
-
-/* 마지막 줄은 아래 테두리를 지웁니다 (바깥 테두리와 겹쳐 두꺼워 보임) */
-.post-list li:last-child {
-  border-bottom: none;
+/* 머리글 줄을 뺀 나머지 줄들 사이에만 얇은 선을 긋습니다.
+   :not(.post-list-head) 는 "머리글 줄은 빼고" 라는 뜻입니다. */
+.post-list li:not(.post-list-head) + li {
+  border-top: 1px solid var(--color-line);
 }
 
 /* 제목 | 작성자 | 작성일 3열.
    1fr = 남는 공간을 제목이 전부 차지하고, 작성자/작성일은 너비를 고정합니다.
-   머리글 줄과 글 줄에 같은 규칙을 줘야 열이 세로로 맞습니다. */
+   머리글 줄과 글 줄에 같은 규칙을 줘야 열이 세로로 맞습니다.
+
+   padding 위아래를 11px 로 낮게 잡은 것이 핵심입니다.
+   한 줄 높이가 약 45px 이라 열 줄이 450px 안에 들어옵니다. */
 .post-list-head,
 .post-list a {
   display: grid;
-  grid-template-columns: 1fr 104px 92px;
-  gap: 12px;
+  grid-template-columns: 1fr 130px 120px;
+  gap: 16px;
   align-items: center;
-  padding: 15px 18px;
+  padding: 11px 18px;
 }
 
+/* 머리글 줄은 옅은 보라 알약 모양으로 만들어 표의 시작을 알립니다. */
 .post-list-head {
-  background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 4px;
+  border-radius: var(--radius);
+  background-color: var(--brand-soft);
   font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-muted);
+  font-weight: 600;
+  color: var(--brand-1);
 }
 
+/* 글 한 줄.
+   position: relative 는 아래 ::before(왼쪽 그라데이션 막대)를
+   이 줄을 기준으로 배치하기 위한 것입니다. */
 .post-list a {
+  position: relative;
+  border-radius: var(--radius);
   text-decoration: none;
-  transition: background-color 0.12s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .post-list a:hover {
-  background-color: var(--color-hover);
+  background-color: var(--brand-soft);
+}
+
+/* 마우스를 올리면 줄 왼쪽에 보라 막대가 나타납니다.
+   평소에는 높이 0 으로 접혀 있다가, 올리는 순간 위아래로 펼쳐집니다. */
+.post-list a::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  border-radius: 3px;
+  background-image: var(--brand-gradient);
+  transition: height 0.15s ease;
+}
+
+.post-list a:hover::before {
+  height: 18px;
 }
 
 .post-list a:hover .col-title {
-  color: var(--color-accent);
+  color: var(--brand-1);
 }
 
 /* 제목이 길면 ... 으로 잘라서 옆 열을 밀어내지 않게 합니다. */
@@ -126,100 +273,159 @@ h2 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 15.5px;
   font-weight: 500;
-  transition: color 0.12s ease;
+  transition: color 0.15s ease;
 }
 
 .col-writer,
 .col-date {
-  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
   color: var(--color-text-muted);
   text-align: center;
-}
-
-/* 화면이 좁으면 작성자를 숨기고 제목 | 작성일 2열로 (열이 찌그러지지 않게) */
-@media (max-width: 520px) {
-  .app {
-    padding: 32px 16px 64px;
-  }
-
-  .post-list-head,
-  .post-list a {
-    grid-template-columns: 1fr 88px;
-    padding: 14px 14px;
-  }
-
-  .col-writer {
-    display: none;
-  }
 }
 
 /* ── 비어 있을 때 / 불러오는 중 ──────────────────────────── */
 .empty {
   color: var(--color-text-muted);
   text-align: center;
-  padding: 72px 0;
+  padding: 56px 0;
+  font-size: 14px;
 }
 
 .empty p {
-  margin: 0 0 20px;
+  margin: 0 0 18px;
 }
 
-/* 404 페이지의 "목록으로" 버튼을 가운데에 둡니다. */
+/* 안내 페이지의 "글 목록으로" 버튼을 가운데에 둡니다. */
 .center-actions {
   display: flex;
   justify-content: center;
 }
 
+/* ── 안내 페이지 (준비 중 / 404) ─────────────────────────────
+   ComingSoon.jsx 와 NotFound.jsx 가 같이 씁니다.
+   둘 다 "여기엔 아무것도 없다"를 알리는 화면이라 생김새를 맞췄습니다. */
+.notice {
+  text-align: center;
+  padding: 40px 20px 32px;
+}
+
+/* 준비 중 페이지의 공사 이모지 🚧 */
+.notice-emoji {
+  margin: 0 0 12px;
+  font-size: 52px;
+  line-height: 1;
+}
+
+/* 404 페이지의 큰 숫자. 이모지 자리를 대신합니다. */
+.notice-code {
+  margin: 0 0 4px;
+  font-size: 68px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+
+  /* 로고와 같은 방식으로 숫자 안쪽을 보라 그라데이션으로 채웁니다. */
+  background-image: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.notice-title {
+  margin: 0 0 10px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.notice-lead {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.notice-desc {
+  margin: 0 0 28px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--color-text-muted);
+}
+
+/* 농담용 진행률 막대.
+   바깥(.progress)은 회색 홈, 안쪽(.progress-fill)이 보라색으로 채워진 부분입니다.
+   overflow: hidden 을 줘야 채워진 부분의 모서리가 홈 밖으로 삐져나오지 않습니다. */
+.progress {
+  width: 100%;
+  max-width: 280px;
+  height: 8px;
+  margin: 0 auto 10px;
+  border-radius: 999px;
+  background-color: var(--color-line);
+  overflow: hidden;
+}
+
+.progress-fill {
+  width: 7%;
+  height: 100%;
+  border-radius: 999px;
+  background-image: var(--brand-gradient);
+}
+
+.progress-caption {
+  margin: 0 0 28px;
+  font-size: 12.5px;
+  color: var(--color-text-faint);
+}
+
 /* ── 상세 ────────────────────────────────────────────────── */
 .detail h2 {
-  font-size: 25px;
+  font-size: 22px;
   font-weight: 700;
-  line-height: 1.4;
-  margin-bottom: 12px;
+  line-height: 1.45;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
 }
 
 .detail .writer {
   color: var(--color-text-muted);
-  font-size: 13.5px;
-  margin: 0 0 28px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--color-border);
+  font-size: 12.5px;
+  margin: 0 0 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-line);
 }
 
 .detail .content {
-  min-height: 160px;
+  min-height: 170px;
   white-space: pre-wrap; /* 줄바꿈 그대로 보여주기 */
   line-height: 1.85; /* 긴 글을 읽기 편하게 */
-}
-
-/* 띄어쓰기 없는 긴 문자열(URL 등)이 화면 밖으로 삐져나가지 않게
-   글자 중간에서라도 줄을 바꿉니다. */
-.detail h2,
-.detail .content {
-  overflow-wrap: break-word;
+  font-size: 15px;
 }
 
 /* ── 폼 (글쓰기 / 수정 / 로그인 / 회원가입) ──────────────── */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .form input,
 .form textarea {
-  padding: 12px 14px;
-  border: 1px solid var(--color-border-strong);
+  padding: 11px 13px;
+  border: 1px solid var(--color-line-mid);
   border-radius: var(--radius-sm);
   background-color: var(--color-bg);
   color: inherit;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 14.5px;
   line-height: 1.6;
   transition:
-    border-color 0.12s ease,
-    box-shadow 0.12s ease;
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .form input::placeholder,
@@ -228,55 +434,83 @@ h2 {
 }
 
 .form textarea {
-  min-height: 260px;
+  min-height: 240px;
+  line-height: 1.85;
   resize: none;
 }
 
-/* 입력 중인 칸을 포인트 색으로 알려줍니다. */
+/* 입력 중인 칸은 보라 테두리 + 옅은 보라 번짐으로 알려줍니다. */
 .form input:focus,
 .form textarea:focus {
   outline: none;
-  border-color: var(--color-accent);
+  border-color: var(--brand-1);
   box-shadow: var(--focus-ring);
 }
 
 /* 글자수 카운터 (제목/내용 입력 아래 표시) */
 .char-count {
-  margin: -4px 2px 4px;
-  font-size: 12px;
+  margin: -6px 2px 0;
+  font-size: 11.5px;
   color: var(--color-text-faint);
   text-align: right;
 }
 
-/* 로그인 / 회원가입 페이지는 폭을 좁혀 가운데로 모읍니다. */
-.auth-page {
-  max-width: 380px;
-  margin: 32px auto 0;
+/* 로그인 / 회원가입은 입력할 게 적으니 목록보다는 좁게 둡니다.
+   다만 너무 좁으면 휴대폰 화면처럼 보이므로 넉넉한 크기로 잡았습니다.
+   :has(...) 는 "안에 .auth-page 를 품고 있는 .card" 라는 뜻입니다. */
+.card:has(.auth-page) {
+  /* width: 100% 가 꼭 필요합니다.
+     .app 이 flex 상자라서, 좌우 margin 을 auto 로 두면 카드가 "내용 크기"로
+     쪼그라듭니다. (flex 는 가로 margin 이 auto 면 늘리기를 포기합니다)
+     그래서 일단 100% 로 펴 놓고, max-width 로 480px 에서 멈추게 합니다. */
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 48px 44px;
 }
 
 .auth-page h2 {
   text-align: center;
-  font-size: 22px;
-  margin-bottom: 28px;
+  font-size: 26px;
+  margin-bottom: 32px;
+}
+
+/* 이 화면의 입력칸과 버튼은 본문보다 한 단계 크게 씁니다.
+   입력할 게 두 칸뿐이라, 크게 둬야 화면이 허전해 보이지 않습니다. */
+.auth-page .form {
+  gap: 12px;
+}
+
+.auth-page .form input {
+  height: 52px;
+  padding: 0 16px;
+  font-size: 15.5px;
 }
 
 /* 이 페이지에서는 버튼을 입력칸 너비에 맞춰 꽉 채웁니다. */
 .auth-page .form .btn {
   width: 100%;
-  margin-top: 6px;
-  padding: 12px 18px;
+  height: 52px;
+  margin-top: 8px;
+  font-size: 15.5px;
 }
 
 .auth-switch {
-  margin-top: 20px;
+  margin: 28px 0 0;
   font-size: 14px;
   color: var(--color-text-muted);
   text-align: center;
 }
 
 .auth-switch a {
-  color: var(--color-accent);
-  font-weight: 500;
+  color: var(--brand-1);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* ── 버튼 ────────────────────────────────────────────────── */
@@ -284,9 +518,9 @@ h2 {
   display: flex;
   justify-content: space-between; /* 목록으로(왼쪽) ↔ 수정·삭제(오른쪽) */
   gap: 8px;
-  margin-top: 40px;
-  padding-top: 24px;
-  border-top: 1px solid var(--color-border);
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-line);
 }
 
 /* 오른쪽에 묶이는 수정/삭제 버튼 그룹 */
@@ -299,7 +533,7 @@ h2 {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .btn {
@@ -307,28 +541,33 @@ h2 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 92px;
-  padding: 9px 18px;
-  border: 1px solid var(--color-border-strong);
+
+  /* 높이를 고정하면 글자 수가 달라도("확인" vs "목록으로") 줄이 흔들리지 않습니다. */
+  height: 34px;
+  min-width: 76px;
+  padding: 0 15px;
+
+  border: 1px solid var(--color-line-mid);
   border-radius: var(--radius-sm);
   background-color: var(--color-bg);
   color: inherit;
   font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
   transition:
-    background-color 0.12s ease,
-    border-color 0.12s ease,
-    color 0.12s ease;
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .btn:hover {
-  background-color: var(--color-hover);
-  border-color: var(--color-text-faint);
+  border-color: var(--brand-line);
+  background-color: var(--brand-soft);
+  color: var(--brand-1);
 }
 
 /* 누를 때 살짝 눌리는 느낌 */
@@ -338,64 +577,79 @@ h2 {
 
 /* 눌러도 소용없는 버튼(제출 중, 첫 페이지의 "이전" 등)은 흐리게 */
 .btn:disabled {
-  opacity: 0.45;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 .btn:disabled:hover {
   background-color: var(--color-bg);
-  border-color: var(--color-border-strong);
+  border-color: var(--color-line-mid);
+  color: inherit;
 }
 
 .btn:disabled:active {
   transform: none;
 }
 
-/* 화면에서 가장 중요한 버튼 하나에만 씁니다. */
+/* 화면에서 가장 중요한 버튼 하나에만 씁니다.
+   보라 그라데이션 + 아래로 떨어지는 보랏빛 그림자로 확실히 띄웁니다. */
 .btn-primary {
-  border-color: var(--color-accent);
-  background-color: var(--color-accent);
-  color: #fff;
+  border-color: transparent;
+  background-image: var(--brand-gradient);
+  color: #ffffff;
+  box-shadow: var(--shadow-brand);
 }
 
 .btn-primary:hover {
-  background-color: var(--color-accent-hover);
-  border-color: var(--color-accent-hover);
+  border-color: transparent;
+  background-image: var(--brand-gradient);
+  color: #ffffff;
+  /* 그림자를 키워서 살짝 더 떠오른 것처럼 보이게 합니다. */
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.4);
+}
+
+.btn-primary:disabled:hover {
+  background-image: var(--brand-gradient);
+  box-shadow: var(--shadow-brand);
 }
 
 .btn-danger {
-  border-color: var(--color-border-strong);
   color: var(--color-danger);
 }
 
 .btn-danger:hover {
   background-color: var(--color-danger-soft);
   border-color: var(--color-danger);
+  color: var(--color-danger);
 }
 
 /* ── 페이지 번호 ─────────────────────────────────────────── */
 .pagination {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
   justify-content: center;
-  margin-top: 32px;
+  margin-top: 20px;
 }
 
+/* 번호 버튼은 정사각형에 가깝게 줄입니다. */
 .pagination .btn {
-  min-width: 40px;
-  padding: 7px 12px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 9px;
+  font-size: 12.5px;
 }
 
 /* ── 모달(팝업) ──────────────────────────────────────────── */
-/* 화면 전체를 덮는 반투명 배경 */
+/* 화면 전체를 덮는 반투명 배경 (보랏빛이 살짝 도는 어두운 색) */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(15, 23, 42, 0.45);
+  background-color: rgba(30, 26, 46, 0.42);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -404,23 +658,28 @@ h2 {
   animation: modal-fade-in 0.15s ease;
 }
 
-/* 가운데 뜨는 하얀 상자 */
+/* 가운데 뜨는 흰 상자 */
 .modal-box {
   width: 100%;
-  max-width: 360px;
+  max-width: 350px;
   background-color: var(--color-bg);
-  border-radius: 14px;
-  padding: 28px 24px 20px;
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-lg);
+  padding: 30px 26px 22px;
+  box-shadow: var(--shadow-modal);
   animation: modal-pop-in 0.15s ease;
 }
 
 .modal-message {
-  margin: 0 0 24px;
-  font-size: 15px;
-  line-height: 1.65;
+  margin: 0 auto 24px;
+  max-width: 30ch; /* 한 줄이 너무 길어지지 않게 */
+  font-size: 14.5px;
+  line-height: 1.7;
   text-align: center;
   white-space: pre-wrap; /* 줄바꿈 그대로 보여주기 */
+
+  /* 여러 줄이 될 때 줄 길이를 고르게 나눠 "주세요." 한 단어만 아래로
+     떨어지는 것을 막아줍니다. (지원하지 않는 브라우저는 그냥 무시합니다) */
+  text-wrap: balance;
 }
 
 /* 모달 안 버튼 영역 */
@@ -443,7 +702,7 @@ h2 {
 @keyframes modal-pop-in {
   from {
     opacity: 0;
-    transform: scale(0.97) translateY(4px);
+    transform: scale(0.96) translateY(6px);
   }
   to {
     opacity: 1;
@@ -451,8 +710,65 @@ h2 {
   }
 }
 
+/* ── 좁은 화면 ───────────────────────────────────────────── */
+/* 화면이 좁아지면 메뉴가 로고와 로그인 버튼을 밀어내므로 숨깁니다.
+   목록 화면은 로고를 눌러서 갈 수 있습니다. */
+@media (max-width: 780px) {
+  .nav {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .app {
+    padding: 16px 14px 24px;
+  }
+
+  .notice {
+    padding: 24px 8px 20px;
+  }
+
+  .notice-code {
+    font-size: 56px;
+  }
+
+  .notice-title {
+    font-size: 22px;
+  }
+
+  .card {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .post-list-head,
+  .post-list a {
+    /* 화면이 좁으면 작성자 열을 숨겨 제목이 찌그러지지 않게 합니다. */
+    grid-template-columns: 1fr 80px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .col-writer {
+    display: none;
+  }
+
+  .card:has(.auth-page) {
+    padding: 32px 22px;
+  }
+
+  .auth-page h2 {
+    font-size: 22px;
+  }
+
+  .detail h2 {
+    font-size: 19px;
+  }
+}
+
 /* 움직임을 줄이도록 설정한 사용자에게는 애니메이션을 끕니다. */
 @media (prefers-reduced-motion: reduce) {
+  .card,
   .modal-overlay,
   .modal-box {
     animation: none;
@@ -460,5 +776,9 @@ h2 {
 
   .btn:active {
     transform: none;
+  }
+
+  .post-list a::before {
+    transition: none;
   }
 }
