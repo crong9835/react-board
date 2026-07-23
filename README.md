@@ -40,10 +40,6 @@ src/
    ├─ Signup.jsx      # 회원가입
    ├─ ComingSoon.jsx  # 아직 만들지 않은 메뉴 안내
    └─ NotFound.jsx    # 없는 주소 안내
-
-supabase/
-├─ policy.sql         # posts 테이블 RLS 정책 기록 (실제 설정은 Supabase 대시보드)
-└─ profiles.sql       # profiles 테이블 · 닉네임 자동 생성 트리거
 ```
 
 ## 로컬 실행 방법
