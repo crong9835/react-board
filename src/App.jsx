@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabase';
 import { Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import { useUser, useAuthLoading } from './AuthContext';
+import { formatWriter } from './format';
 import PostList from './pages/PostList';
 import PostWrite from './pages/PostWrite';
 import PostDetail from './pages/PostDetail';
@@ -65,7 +66,10 @@ function App() {
         <div className="auth-menu">
           {user ? (
             <>
-              <span className="user-email">{user.email}</span>
+              {/* 목록의 작성자 표시와 같은 규칙을 씁니다.
+                  이메일 전체(crong9835@gmail.com)를 화면에 그대로 두지 않고
+                  @ 앞부분(crong9835)만 보여줍니다. */}
+              <span className="user-email">{formatWriter(user.email)}</span>
               <button className="btn" onClick={handleLogout}>
                 로그아웃
               </button>

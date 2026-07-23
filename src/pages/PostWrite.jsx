@@ -16,6 +16,11 @@ function PostWrite({ posts, setPosts }) {
   // 모달을 닫은 뒤 목록 페이지로 이동할지 여부 (등록 성공했을 때만 true)
   const [goToListAfterClose, setGoToListAfterClose] = useState(false);
 
+  // 서버에 저장을 요청해 놓고 답을 기다리는 중인지 여부.
+  // 이 값이 true 인 동안 등록 버튼을 막아서, 빠르게 두 번 눌렀을 때
+  // 같은 글이 두 개 저장되는 것을 방지합니다.
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const TITLE_MAX = 30;
   const CONTENT_MAX = 500;
 
@@ -40,6 +45,9 @@ function PostWrite({ posts, setPosts }) {
       return;
     }
 
+    // 여기서부터 서버 응답을 기다립니다. 기다리는 동안 버튼을 막습니다.
+    setIsSubmitting(true);
+
     // user_id 를 같이 저장해야 나중에 "본인 글"인지 확인할 수 있음
     const { data, error } = await supabase
       .from('posts')
@@ -53,6 +61,10 @@ function PostWrite({ posts, setPosts }) {
       ])
       .select()
       .single();
+
+    // 응답이 왔으니 버튼을 다시 풀어줍니다.
+    // 실패했을 때 다시 시도할 수 있어야 하므로 성공·실패를 가리지 않고 풉니다.
+    setIsSubmitting(false);
 
     if (error) {
       console.log('등록 에러:', error);
@@ -76,7 +88,7 @@ function PostWrite({ posts, setPosts }) {
 
   return (
     <div>
-      <h2>글쓰기 페이지</h2>
+      <h2>글쓰기</h2>
 
       <form className="form" onSubmit={handleSubmit}>
         <input
@@ -104,8 +116,12 @@ function PostWrite({ posts, setPosts }) {
             취소
           </button>
 
-          <button type="submit" className="btn btn-primary">
-            등록
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? '등록 중...' : '등록'}
           </button>
         </div>
       </form>

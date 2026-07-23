@@ -74,6 +74,10 @@ function PostEditForm({ post, posts, setPosts, detailPath }) {
   // 모달을 닫은 뒤 상세 페이지로 이동할지 여부 (수정 성공했을 때만 true)
   const [goToDetailAfterClose, setGoToDetailAfterClose] = useState(false);
 
+  // 서버에 저장을 요청해 놓고 답을 기다리는 중인지 여부.
+  // 이 값이 true 인 동안 수정 버튼을 막아서 같은 요청이 두 번 나가는 것을 막습니다.
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const TITLE_MAX = 30;
   const CONTENT_MAX = 500;
 
@@ -108,12 +112,19 @@ function PostEditForm({ post, posts, setPosts, detailPath }) {
     //
     // .eq('user_id', ...) 는 DB 의 RLS 와 겹치는 조건이지만,
     // "내 글만 고친다"는 의도를 코드에도 드러내기 위해 함께 적습니다.
+    // 여기서부터 서버 응답을 기다립니다. 기다리는 동안 버튼을 막습니다.
+    setIsSubmitting(true);
+
     const { data, error } = await supabase
       .from('posts')
       .update({ title: title, content: content })
       .eq('id', post.id)
       .eq('user_id', user.id)
       .select();
+
+    // 응답이 왔으니 버튼을 다시 풀어줍니다.
+    // 실패했을 때 다시 시도할 수 있어야 하므로 성공·실패를 가리지 않고 풉니다.
+    setIsSubmitting(false);
 
     if (error) {
       console.log('수정 에러:', error);
@@ -137,7 +148,7 @@ function PostEditForm({ post, posts, setPosts, detailPath }) {
 
   return (
     <div>
-      <h2>글 수정 페이지</h2>
+      <h2>글 수정</h2>
 
       <form className="form" onSubmit={handleSubmit}>
         <input
@@ -165,8 +176,12 @@ function PostEditForm({ post, posts, setPosts, detailPath }) {
             취소
           </button>
 
-          <button type="submit" className="btn btn-primary">
-            수정
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? '수정 중...' : '수정'}
           </button>
         </div>
       </form>
