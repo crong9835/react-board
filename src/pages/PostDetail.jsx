@@ -10,18 +10,43 @@ function PostDetail({ posts, setPosts, loading }) {
   const navigate = useNavigate();
   const user = useUser(); // 로그인한 사용자 (없으면 null)
 
-  // 삭제 확인 모달이 열려 있는지 여부
+  // 삭제 확인 모달("정말 삭제하시겠습니까?")이 열려 있는지 여부
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  // 삭제가 실패했을 때 보여줄 안내 모달
+  // 확인 모달과 별개입니다. 확인 모달을 닫고 이 모달을 대신 띄웁니다.
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
   const post = posts.find((post) => post.id === Number(id));
 
+  // 확인 모달을 닫고 안내 모달을 여는 함수
+  function showAlert(message) {
+    setIsConfirmOpen(false);
+    setAlertMessage(message);
+    setIsAlertOpen(true);
+  }
+
   // 실제 삭제 처리 (모달에서 "삭제"를 눌렀을 때 실행)
   async function handleDelete() {
-    const { error } = await supabase.from('posts').delete().eq('id', id);
+    // 수정과 마찬가지로 .select() 를 붙여야 실제로 몇 건이 지워졌는지 알 수 있습니다.
+    // 붙이지 않으면 남의 글이라 DB(RLS)가 막아도 error 는 null 이라
+    // 지워지지 않았는데 지워진 것처럼 보입니다.
+    const { data, error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', Number(id))
+      .select();
 
     if (error) {
       console.log('삭제 에러:', error);
-      setIsConfirmOpen(false);
+      showAlert('삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
+
+    // 돌아온 행이 없다 = DB가 "당신 글이 아니다"라며 막았다는 뜻
+    if (data.length === 0) {
+      showAlert('본인이 작성한 글만 삭제할 수 있습니다.');
       return;
     }
 
@@ -79,6 +104,13 @@ function PostDetail({ posts, setPosts, loading }) {
         confirmText="삭제"
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleDelete}
+      />
+
+      {/* 삭제가 실패했을 때 띄우는 안내 모달 (확인 버튼 하나) */}
+      <Modal
+        isOpen={isAlertOpen}
+        message={alertMessage}
+        onClose={() => setIsAlertOpen(false)}
       />
     </div>
   );

@@ -51,21 +51,33 @@ function PostEdit({ posts, setPosts }) {
     }
 
     // 제목과 내용만 수정 (작성자는 바뀌지 않음)
-    const { error } = await supabase
+    //
+    // .select() 를 꼭 붙여야 합니다.
+    // 붙이지 않으면 서버가 "204 No Content" 로 답해서 실제로 몇 건이 고쳐졌는지
+    // 알 수 없습니다. 남의 글이라 DB(RLS)가 막아도 그건 "에러"가 아니라
+    // "0건 수정"이라서 error 는 null 로 옵니다. 그래서 아래 data.length 검사가
+    // 없으면 실패를 성공이라고 안내하게 됩니다.
+    const { data, error } = await supabase
       .from('posts')
-      .update({ title, content })
-      .eq('id', Number(id));
+      .update({ title: title, content: content })
+      .eq('id', Number(id))
+      .select();
 
     if (error) {
       console.log('수정 에러:', error);
+      openModal('수정에 실패했습니다. 잠시 후 다시 시도해 주세요.');
       return;
     }
 
-    setPosts(
-      posts.map((p) =>
-        p.id === Number(id) ? { ...p, title: title, content: content } : p,
-      ),
-    );
+    // 돌아온 행이 없다 = DB가 "당신 글이 아니다"라며 막았다는 뜻
+    if (data.length === 0) {
+      openModal('본인이 작성한 글만 수정할 수 있습니다.');
+      return;
+    }
+
+    // DB 가 실제로 저장한 행(data[0])을 그대로 넣습니다.
+    // 직접 만든 값이 아니라 저장된 값이라, 화면과 DB 가 어긋날 수 없습니다.
+    setPosts(posts.map((p) => (p.id === Number(id) ? data[0] : p)));
 
     setGoToDetailAfterClose(true);
     openModal('수정되었습니다.');
