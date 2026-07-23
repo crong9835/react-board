@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { supabase } from '../supabase';
 import { useUser } from '../AuthContext';
+import { formatWriter, formatDate } from '../format';
 import Modal from '../components/Modal';
 
 function PostDetail({ posts, setPosts, loading }) {
@@ -43,7 +44,10 @@ function PostDetail({ posts, setPosts, loading }) {
   return (
     <div className="detail">
       <h2>{post.title}</h2>
-      <p className="writer">작성자: {post.writer}</p>
+      <p className="writer">
+        작성자: {formatWriter(post.writer)} · 작성일:{' '}
+        {formatDate(post.created_at)}
+      </p>
       <p className="content">{post.content}</p>
 
       <div className="actions">

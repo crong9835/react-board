@@ -65,15 +65,61 @@ h2 {
   border-bottom: 1px solid #eee;
 }
 
+/* 제목 | 작성자 | 작성일 3열.
+   1fr = 남는 공간을 제목이 전부 차지하고, 작성자/작성일은 너비를 고정합니다.
+   머리글 줄과 글 줄에 같은 규칙을 줘야 열이 세로로 맞습니다. */
+.post-list-head,
 .post-list a {
-  display: block;
+  display: grid;
+  grid-template-columns: 1fr 100px 90px;
+  gap: 8px;
+  align-items: center;
   padding: 14px 4px;
+}
+
+.post-list-head {
+  background-color: #fafafa;
+  font-size: 13px;
+  color: #555;
+}
+
+.post-list a {
   text-decoration: none;
 }
 
 .post-list a:hover {
   background-color: #fafafa;
+}
+
+/* 밑줄은 제목에만 (작성자·작성일까지 밑줄이 가면 지저분해서) */
+.post-list a:hover .col-title {
   text-decoration: underline;
+}
+
+/* 제목이 길면 ... 으로 잘라서 옆 열을 밀어내지 않게 합니다. */
+.col-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-writer,
+.col-date {
+  font-size: 13px;
+  color: #888;
+  text-align: center;
+}
+
+/* 화면이 좁으면 작성자를 숨기고 제목 | 작성일 2열로 (열이 찌그러지지 않게) */
+@media (max-width: 480px) {
+  .post-list-head,
+  .post-list a {
+    grid-template-columns: 1fr 90px;
+  }
+
+  .col-writer {
+    display: none;
+  }
 }
 
 .empty {

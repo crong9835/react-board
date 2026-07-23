@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { formatWriter, formatDate } from '../format';
 
 function PostList({ posts, loading }) {
   const [page, setPage] = useState(1);
@@ -38,9 +39,22 @@ function PostList({ posts, loading }) {
       ) : (
         <>
           <ul className="post-list">
+            {/* 각 열이 무엇인지 알려주는 머리글 줄 (클릭 대상이 아님) */}
+            <li className="post-list-head">
+              <span className="col-title">제목</span>
+              <span className="col-writer">작성자</span>
+              <span className="col-date">작성일</span>
+            </li>
+
             {currentPosts.map((post) => (
               <li key={post.id}>
-                <Link to={`/post/${post.id}`}>{post.title}</Link>
+                <Link to={`/post/${post.id}`}>
+                  <span className="col-title">{post.title}</span>
+                  <span className="col-writer">
+                    {formatWriter(post.writer)}
+                  </span>
+                  <span className="col-date">{formatDate(post.created_at)}</span>
+                </Link>
               </li>
             ))}
           </ul>
