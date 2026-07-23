@@ -8,6 +8,7 @@ import PostDetail from './pages/PostDetail';
 import PostEdit from './pages/PostEdit';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import NotFound from './pages/NotFound';
 import './App.css';
 
 function App() {
@@ -88,14 +89,17 @@ function App() {
           element={<PostList posts={posts} loading={loading} />}
         />
 
-        {/* 글쓰기는 로그인해야만 가능. 아니면 로그인 페이지로 보냄 */}
+        {/* 글쓰기는 로그인해야만 가능. 아니면 로그인 페이지로 보냄
+            replace 를 붙이면 이 이동이 방문 기록에 쌓이지 않습니다.
+            안 붙이면 "목록 → 로그인" 기록이 남아서, 뒤로가기를 눌러도
+            다시 로그인 페이지로 튕겨 나와 목록으로 돌아갈 수 없습니다. */}
         <Route
           path="/write"
           element={
             user ? (
               <PostWrite posts={posts} setPosts={setPosts} />
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/login" replace />
             )
           }
         />
@@ -113,13 +117,23 @@ function App() {
             user ? (
               <PostEdit posts={posts} setPosts={setPosts} loading={loading} />
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/login" replace />
             )
           }
         />
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        {/* 이미 로그인한 사람에게 로그인/회원가입 페이지는 의미가 없으므로 홈으로 보냅니다. */}
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/" replace /> : <Login />}
+        />
+        <Route
+          path="/signup"
+          element={user ? <Navigate to="/" replace /> : <Signup />}
+        />
+
+        {/* 위의 어떤 주소와도 맞지 않을 때 (예: /asdf) 보여줄 페이지 */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );
