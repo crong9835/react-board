@@ -26,6 +26,14 @@ function PostDetail({ posts, setPosts, loading }) {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
 
+  // true 인 동안 삭제 요청이 진행 중입니다.
+  // 확인 모달의 "삭제" 버튼을 빠르게 두 번 눌러도 요청이 한 번만 나가게 막습니다.
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // 한 페이지에 보여주는 글 개수입니다. PostList 의 pageSize 와 같아야 합니다.
+  // (삭제 후 돌아갈 페이지 번호를 올바르게 계산하는 데 씁니다.)
+  const POSTS_PER_PAGE = 15;
+
   const post = posts.find((item) => item.id === postId);
 
   function showAlert(message) {
@@ -36,6 +44,12 @@ function PostDetail({ posts, setPosts, loading }) {
 
   // 모달에서 "삭제"를 눌렀을 때 실행
   async function handleDelete() {
+    // 이미 삭제가 진행 중이면 아무 것도 하지 않습니다. (중복 클릭 방지)
+    if (isDeleting) {
+      return;
+    }
+    setIsDeleting(true);
+
     // .select() 를 붙여야 실제로 몇 건이 지워졌는지 알 수 있습니다.
     // 붙이지 않으면 남의 글이라 DB(RLS)가 막아도 error 는 null 이라
     // 지워지지 않았는데 지워진 것처럼 보입니다.
@@ -51,18 +65,35 @@ function PostDetail({ posts, setPosts, loading }) {
 
     if (error) {
       console.log('삭제 에러:', error);
+      // 다시 시도할 수 있도록 진행 중 표시를 풀어줍니다.
+      setIsDeleting(false);
       showAlert('삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.');
       return;
     }
 
     // 돌아온 행이 없다 = DB가 "당신 글이 아니다"라며 막았다는 뜻
     if (data.length === 0) {
+      setIsDeleting(false);
       showAlert('본인이 작성한 글만 삭제할 수 있습니다.');
       return;
     }
 
-    setPosts(posts.filter((item) => item.id !== postId));
-    navigate(listPath);
+    // 삭제 성공. 목록에서도 이 글을 빼줍니다.
+    const remainingPosts = posts.filter((item) => item.id !== postId);
+    setPosts(remainingPosts);
+
+    // 삭제로 글이 줄면 보던 페이지가 사라질 수 있습니다.
+    // 예: 글 16개(2페이지)에서 2페이지의 마지막 한 개를 지우면 이제 1페이지뿐인데,
+    // 그대로 ?page=2 로 돌아가면 "없는 페이지"라 404 화면이 뜹니다.
+    // 그래서 남은 글 수로 마지막 페이지를 다시 계산해, 그 번호를 넘지 않게 맞춥니다.
+    const lastPage = Math.max(
+      1,
+      Math.ceil(remainingPosts.length / POSTS_PER_PAGE)
+    );
+    const safePage = Math.min(page, lastPage);
+
+    // 성공하면 목록으로 이동하므로 isDeleting 은 되돌리지 않아도 됩니다.
+    navigate(`/?page=${safePage}`);
   }
 
   // 아직 목록을 불러오는 중이면 "없음"이 아니라 "불러오는 중"으로 안내

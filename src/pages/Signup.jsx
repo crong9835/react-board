@@ -19,6 +19,10 @@ function Signup() {
   // 모달을 닫은 뒤 이동할 주소. null 이면 그냥 닫기만 합니다.
   const [pathAfterClose, setPathAfterClose] = useState(null);
 
+  // true 인 동안 회원가입 버튼을 막습니다.
+  // 버튼을 빠르게 두 번 눌러 가입 요청이 두 번 나가는 것을 막기 위한 값입니다.
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // 이 페이지에 처음 들어온 순간 이미 로그인 상태였는지 기억해 둡니다.
   //
   // useState 의 초기값은 처음 한 번만 쓰이고 그 뒤로는 바뀌지 않습니다.
@@ -102,6 +106,9 @@ function Signup() {
       return;
     }
 
+    // 여기서부터 서버에 요청을 보냅니다. 버튼을 잠가 중복 제출을 막습니다.
+    setIsSubmitting(true);
+
     // 닉네임이 이미 쓰이고 있는지 확인합니다.
     //   ilike       대소문자를 가리지 않고 비교합니다. (crong 과 Crong 을 같게 봄)
     //   maybeSingle 한 줄만 가져오되, 없으면 에러 대신 null 을 줍니다.
@@ -118,11 +125,13 @@ function Signup() {
 
     if (nicknameError) {
       console.log('닉네임 확인 에러:', nicknameError);
+      setIsSubmitting(false);
       openModal('닉네임을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.');
       return;
     }
 
     if (sameNickname) {
+      setIsSubmitting(false);
       openModal('이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해 주세요.');
       return;
     }
@@ -138,6 +147,7 @@ function Signup() {
     });
 
     if (error) {
+      setIsSubmitting(false);
       openModal('회원가입 실패: ' + toKoreanAuthError(error));
       return;
     }
@@ -158,6 +168,7 @@ function Signup() {
     const identities = data.user ? data.user.identities : null;
 
     if (identities && identities.length === 0) {
+      setIsSubmitting(false);
       openModal('회원가입 실패: 이미 가입된 이메일입니다.');
       return;
     }
@@ -210,8 +221,12 @@ function Signup() {
         <p className="form-hint">
           닉네임은 글쓴이 이름으로 표시되며, 가입 후에는 변경할 수 없습니다.
         </p>
-        <button type="submit" className="btn btn-primary">
-          회원가입
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? '가입 중...' : '회원가입'}
         </button>
       </form>
 

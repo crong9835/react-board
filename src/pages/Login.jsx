@@ -16,6 +16,10 @@ function Login() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
 
+  // true 인 동안 로그인 버튼을 막습니다.
+  // 버튼을 빠르게 두 번 눌러 로그인 요청이 두 번 나가는 것을 막기 위한 값입니다.
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // 이 페이지에 처음 들어온 순간 이미 로그인 상태였는지 기억해 둡니다.
   // (자세한 설명은 Signup.jsx 의 같은 코드에 적어두었습니다)
   const [wasAlreadyLoggedIn] = useState(user !== null);
@@ -39,12 +43,16 @@ function Login() {
       return;
     }
 
+    setIsSubmitting(true);
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
+      // 실패했으면 다시 시도할 수 있도록 버튼을 풀어줍니다.
+      setIsSubmitting(false);
       openModal('로그인 실패: ' + toKoreanAuthError(error));
       return;
     }
@@ -78,8 +86,12 @@ function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type="submit" className="btn btn-primary">
-          로그인
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? '로그인 중...' : '로그인'}
         </button>
       </form>
 
