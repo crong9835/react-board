@@ -61,15 +61,20 @@ function Login() {
       <h2>로그인</h2>
 
       <form className="form" onSubmit={handleSubmit}>
+        {/* aria-label 은 화면에는 안 보이지만 스크린 리더가 읽어주는 이름입니다.
+            placeholder 는 타이핑을 시작하면 사라져서 "이 칸이 무엇인지" 알려주는
+            역할을 온전히 하지 못하므로, 접근성을 위해 aria-label 을 함께 답니다. */}
         <input
           type="email"
           placeholder="이메일"
+          aria-label="이메일"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"
           placeholder="비밀번호"
+          aria-label="비밀번호"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />

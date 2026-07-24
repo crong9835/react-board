@@ -146,9 +146,12 @@ function PostEditForm({ post, posts, setPosts, detailPath }) {
       <h2>글 수정</h2>
 
       <form className="form" onSubmit={handleSubmit}>
+        {/* aria-label 은 화면에는 안 보이지만 스크린 리더가 읽어주는 이름입니다.
+            placeholder 는 타이핑을 시작하면 사라지므로 접근성을 위해 함께 답니다. */}
         <input
           type="text"
           placeholder="제목"
+          aria-label="제목"
           value={title}
           maxLength={TITLE_MAX}
           onChange={(e) => setTitle(e.target.value)}
@@ -159,6 +162,7 @@ function PostEditForm({ post, posts, setPosts, detailPath }) {
 
         <textarea
           placeholder="내용"
+          aria-label="내용"
           value={content}
           maxLength={CONTENT_MAX}
           onChange={(e) => setContent(e.target.value)}
