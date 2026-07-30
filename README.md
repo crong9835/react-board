@@ -6,6 +6,7 @@ React + Vite + Supabase로 만든 간단한 게시판입니다.
 ## 주요 기능
 
 - 게시글 목록 (15개씩 페이지네이션)
+- 제목 · 작성자 검색 (검색 조건이 주소에 남아 새로고침·뒤로가기·링크 공유에서 유지)
 - 게시글 작성 / 상세 보기 / 수정 / 삭제
 - 이메일 회원가입 · 로그인 (Supabase Auth)
 - 닉네임 (가입 시 지정, 중복 불가, 변경 불가)
@@ -28,11 +29,12 @@ src/
 ├─ AuthContext.jsx    # 로그인 사용자 정보 Context
 ├─ authErrors.js      # Supabase 인증 에러 → 한글 메시지 변환
 ├─ format.js          # 작성자·날짜 표시 형식 변환
+├─ search.js          # 검색 대상 목록 + 검색어 이스케이프
 ├─ supabase.js        # Supabase 클라이언트 생성
 ├─ components/
 │  └─ Modal.jsx       # 안내용 / 확인용 모달
 └─ pages/
-   ├─ PostList.jsx    # 목록 + 페이지네이션
+   ├─ PostList.jsx    # 목록 + 페이지네이션 + 검색
    ├─ PostWrite.jsx   # 글쓰기
    ├─ PostDetail.jsx  # 상세 보기 + 삭제
    ├─ PostEdit.jsx    # 글 수정

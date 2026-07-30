@@ -214,6 +214,83 @@ h2 {
   margin: 0;
 }
 
+/* ── 검색 ────────────────────────────────────────────────
+   [제목 ▾] [검색어 ...............] [검색]
+   가운데 입력칸만 1fr 로 두어 남는 폭을 전부 차지하게 합니다. */
+.search-form {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+/* 입력칸 모양은 .form 의 규칙과 맞춰 게시판 전체가 같은 톤이 되게 합니다.
+   .form 안에 있지 않아서 그 규칙이 닿지 않으므로 여기에 다시 적습니다. */
+.search-select,
+.search-input {
+  padding: 9px 12px;
+  border: 1px solid var(--color-line-mid);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg);
+  color: inherit;
+  font-family: inherit;
+  font-size: 14px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.search-select {
+  cursor: pointer;
+}
+
+.search-input::placeholder {
+  color: var(--color-text-faint);
+}
+
+.search-select:focus,
+.search-input:focus {
+  outline: none;
+  border-color: var(--brand-1);
+  box-shadow: var(--focus-ring);
+}
+
+/* 검색 중일 때 목록 위에 뜨는 안내 줄 */
+.search-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 9px 14px;
+  border-radius: var(--radius);
+  background-color: var(--brand-soft);
+  font-size: 13.5px;
+  color: var(--brand-1);
+}
+
+.search-info strong {
+  font-weight: 700;
+}
+
+/* "검색 해제" 는 버튼이지만 링크처럼 보이게 둡니다.
+   옆의 안내 문구에 딸린 작은 동작이라 .btn 을 쓰면 너무 크게 튑니다. */
+.search-reset {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.search-reset:hover {
+  opacity: 0.7;
+}
+
 .post-list {
   list-style: none;
   margin: 0;

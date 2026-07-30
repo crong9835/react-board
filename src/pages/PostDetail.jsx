@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { useUser } from '../AuthContext';
 import { formatWriter, formatDate } from '../format';
+import { normalizeSearchType, applySearch } from '../search';
 import Modal from '../components/Modal';
 
 // 한 페이지에 보여주는 글 개수입니다. PostList 의 PAGE_SIZE 와 같아야 합니다.
@@ -17,11 +18,29 @@ function PostDetail() {
   const navigate = useNavigate();
   const user = useUser();
 
-  // 목록에서 넘어올 때 주소에 실려 온 페이지 번호 (예: /post/3?page=2 → 2)
-  // 주소창으로 상세에 바로 들어와 ?page 가 없으면 1페이지로 돌아갑니다.
+  // 목록에서 넘어올 때 주소에 실려 온 목록 상태입니다.
+  // (예: /post/3?page=2&type=title&q=고양이)
+  // 주소창으로 상세에 바로 들어와 아무것도 없으면 전체 목록 1페이지로 돌아갑니다.
   const [searchParams] = useSearchParams();
   const page = Number(searchParams.get('page')) || 1;
-  const listPath = `/?page=${page}`;
+  const keyword = (searchParams.get('q') || '').trim();
+  const searchType = normalizeSearchType(searchParams.get('type'));
+
+  // 실려 온 조건을 그대로 달아 주소를 만듭니다.
+  // 조건이 하나도 없으면(주소창으로 바로 들어온 경우) 물음표를 붙이지 않습니다.
+  function withListState(path) {
+    const query = searchParams.toString();
+
+    if (!query) {
+      return path;
+    }
+
+    return `${path}?${query}`;
+  }
+
+  // "목록으로" 를 눌렀을 때 갈 주소.
+  // 조건을 그대로 달고 돌아가므로 보던 페이지와 검색 결과가 그대로 나옵니다.
+  const listPath = withListState('/');
 
   // 이 글 하나만 담습니다. 못 찾았으면 계속 null 입니다.
   // (예전에는 App 이 받아둔 전체 글 배열에서 find 로 찾아 썼습니다.)
@@ -121,9 +140,17 @@ function PostDetail() {
     // 그래서 남은 글이 몇 개인지 DB 에게 물어 마지막 페이지를 다시 계산합니다.
     //
     // head: true 는 "개수만 세고 글 내용은 보내지 마라"는 뜻입니다.
-    const { count, error: countError } = await supabase
+    //
+    // 검색 결과를 보다가 들어왔다면 검색 조건을 얹어서 세야 합니다.
+    // 전체 글은 207개라 2페이지가 있어도 검색 결과는 3개뿐일 수 있는데,
+    // 전체 개수로 계산하면 "2페이지는 있다"고 판단해 없는 페이지로 돌아갑니다.
+    let countQuery = supabase
       .from('posts')
       .select('id', { count: 'exact', head: true });
+
+    countQuery = applySearch(countQuery, searchType, keyword);
+
+    const { count, error: countError } = await countQuery;
 
     // 개수를 못 받아왔으면 페이지 번호를 따질 근거가 없으니 1페이지로 보냅니다.
     if (countError || count === null) {
@@ -135,9 +162,13 @@ function PostDetail() {
     const lastPage = Math.max(1, Math.ceil(count / POSTS_PER_PAGE));
     const safePage = Math.min(page, lastPage);
 
+    // 검색 조건은 그대로 두고 페이지 번호만 안전한 값으로 바꿔 끼웁니다.
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('page', String(safePage));
+
     // 성공하면 목록으로 이동하므로 isDeleting 은 되돌리지 않아도 됩니다.
     // 목록은 열릴 때 스스로 다시 조회하므로, 지운 글은 자연히 사라져 있습니다.
-    navigate(`/?page=${safePage}`);
+    navigate(`/?${nextParams.toString()}`);
   }
 
   // 아직 불러오는 중이면 "없음"이 아니라 "불러오는 중"으로 안내
@@ -169,9 +200,12 @@ function PostDetail() {
         {/* 오른쪽: 본인 글일 때만 보이는 수정/삭제 */}
         {isOwner && (
           <div className="actions-right">
+            {/* 수정 페이지에도 목록 상태를 그대로 넘깁니다.
+                수정을 마치면 상세로 돌아오는데, 그때 이 조건이 남아 있어야
+                거기서 "목록으로" 를 눌렀을 때 보던 검색 결과로 돌아갑니다. */}
             <button
               className="btn"
-              onClick={() => navigate(`/edit/${id}?page=${page}`)}
+              onClick={() => navigate(withListState(`/edit/${id}`))}
             >
               수정하기
             </button>

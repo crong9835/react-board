@@ -25,10 +25,10 @@ function PostEdit() {
 
   const user = useUser();
 
-  // 상세 페이지에서 실려 온 페이지 번호. 수정을 마치고 상세로 돌아갈 때
-  // 그대로 달고 가야 거기서 "목록으로"를 눌렀을 때 보던 페이지로 돌아갑니다.
+  // 상세 페이지에서 실려 온 목록 상태(페이지 번호 + 검색 조건)입니다.
+  // 수정을 마치고 상세로 돌아갈 때 그대로 달고 가야, 거기서 "목록으로"를 눌렀을 때
+  // 보던 페이지와 검색 결과로 돌아갑니다.
   const [searchParams] = useSearchParams();
-  const page = Number(searchParams.get('page')) || 1;
 
   // 고칠 글 하나만 담습니다. 못 찾았으면 계속 null 입니다.
   // (예전에는 App 이 받아둔 전체 글 배열에서 find 로 찾아 썼습니다.)
@@ -77,7 +77,12 @@ function PostEdit() {
   // 남의 글이면 수정 폼을 아예 보여주지 않고 상세 페이지로 되돌립니다.
   // DB(RLS)가 이미 막고 있으므로 보안이 아니라, 어차피 못 고칠 폼을
   // 보여주지 않기 위한 처리입니다.
-  const detailPath = `/post/${post.id}?page=${page}`;
+  //
+  // 조건이 하나도 없으면(주소창으로 /edit/3 을 직접 친 경우) 물음표를 붙이지 않습니다.
+  const query = searchParams.toString();
+  const detailPath = query
+    ? `/post/${post.id}?${query}`
+    : `/post/${post.id}`;
 
   if (!user || post.user_id !== user.id) {
     return <Navigate to={detailPath} replace />;
@@ -197,7 +202,7 @@ function PostEditForm({ post, detailPath }) {
           {/* navigate(-1) 은 "브라우저 뒤로가기"와 같아서, 주소창에 /edit/3 을 직접
               쳐서 들어온 경우 앞 기록이 다른 사이트라 거기로 나가버립니다.
               갈 곳을 상세 페이지로 못 박아 두면 어떤 경로로 들어왔든 상세로 갑니다.
-              detailPath 에는 보던 페이지 번호(?page=2)도 들어 있습니다. */}
+              detailPath 에는 보던 페이지 번호와 검색 조건도 들어 있습니다. */}
           <button
             type="button"
             className="btn"
