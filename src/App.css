@@ -215,11 +215,14 @@ h2 {
 }
 
 /* ── 검색 ────────────────────────────────────────────────
-   [제목 ▾] [검색어 ...............] [검색]
-   가운데 입력칸만 1fr 로 두어 남는 폭을 전부 차지하게 합니다. */
+   [제목 ▾] [검색어 ................................]
+   입력칸을 1fr 로 두어 남는 폭을 전부 차지하게 합니다.
+
+   예전에는 오른쪽에 [검색] 버튼이 있어서 칸이 셋이었습니다. 지금은 타이핑하면
+   바로 검색되므로 버튼을 없앴고, 그만큼 입력칸이 넓어졌습니다. */
 .search-form {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr;
   gap: 8px;
   margin-bottom: 14px;
 }
@@ -263,12 +266,10 @@ h2 {
   box-shadow: var(--focus-ring);
 }
 
-/* 검색 중일 때 목록 위에 뜨는 안내 줄 */
+/* 검색 중일 때 목록 위에 뜨는 안내 줄.
+   예전에는 오른쪽 끝에 "검색 해제" 버튼이 함께 있어서 flex 로 양쪽에 밀어
+   놨습니다. 지금은 안내 문구뿐이라 그냥 한 줄로 둡니다. */
 .search-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
   margin: 0 0 12px;
   padding: 9px 14px;
   border-radius: var(--radius);
@@ -281,22 +282,178 @@ h2 {
   font-weight: 700;
 }
 
-/* "검색 해제" 는 버튼이지만 링크처럼 보이게 둡니다.
-   옆의 안내 문구에 딸린 작은 동작이라 .btn 을 쓰면 너무 크게 튑니다. */
-.search-reset {
-  flex-shrink: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  color: inherit;
-  font-family: inherit;
-  font-size: 13px;
-  text-decoration: underline;
-  cursor: pointer;
+/* ── 인기글 카드 ─────────────────────────────────────────
+   PopularPosts.jsx 가 씁니다. 유머 모음집 목록 위에 세 장이 나란히 놓입니다. */
+.popular {
+  margin-bottom: 22px;
 }
 
-.search-reset:hover {
-  opacity: 0.7;
+/* 인기글  ...............................  더보기 */
+.popular-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.popular-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--brand-1);
+}
+
+.popular-more {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.popular-more:hover {
+  color: var(--brand-1);
+}
+
+/* 세 장을 같은 너비로 나눠 놓습니다.
+   repeat(3, 1fr) 은 "1fr 짜리 칸을 세 개" 라는 뜻입니다. 카드 안의 글자
+   길이와 상관없이 세 칸이 정확히 같은 너비가 됩니다. */
+.popular-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* 화면이 좁으면 세 장이 다닥다닥 붙어 제목이 두세 글자씩만 보입니다.
+   680px 아래에서는 한 줄에 한 장씩 쌓습니다. */
+@media (max-width: 680px) {
+  .popular-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.popular-cards a {
+  display: block;
+  padding: 10px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  background-color: var(--color-bg);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+/* 마우스를 올리면 카드가 살짝 떠오릅니다.
+   목록 줄은 배경색이 변하는데, 카드는 이미 테두리가 있어서 배경만 바꾸면
+   변화가 잘 안 보입니다. */
+.popular-cards a:hover {
+  border-color: var(--brand-line);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+}
+
+/* 사진 자리.
+   aspect-ratio 로 가로세로 비율을 4:3 으로 못 박습니다. 이렇게 해두면 사진이
+   가로로 길든 세로로 길든, 사진이 아예 없든 세 카드의 높이가 똑같아집니다.
+   높이를 px 로 정하지 않는 이유는 카드 너비가 화면 크기에 따라 달라지기
+   때문입니다. 비율로 정해두면 너비에 맞춰 높이도 알아서 따라옵니다. */
+.popular-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 3;
+  margin-bottom: 9px;
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-soft);
+  overflow: hidden;
+}
+
+/* object-fit: cover 는 "비율을 지키면서 이 칸을 꽉 채우게 잘라내라" 는 뜻입니다.
+   미리보기(.image-preview)에서 쓴 contain 과 반대입니다.
+   카드는 세 장의 크기가 딱 맞는 것이 중요해서 조금 잘리더라도 채우고,
+   미리보기는 내가 올린 사진 전체를 확인해야 하므로 다 보여줍니다. */
+.popular-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 사진이 없는 글의 카드에 들어가는 글자 */
+.popular-thumb-empty {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--brand-line);
+}
+
+/* 제목은 두 줄까지 보여주고 넘치면 ... 으로 자릅니다.
+   목록 줄은 한 줄(white-space: nowrap)이지만 카드는 폭이 좁아서, 한 줄로
+   자르면 제목 앞부분만 보여 무슨 글인지 알 수 없습니다.
+
+   -webkit-line-clamp 는 "몇 줄까지만" 을 정하는 규칙입니다. 아래 세 줄을
+   함께 써야 동작합니다. (이름에 webkit 이 붙어 있지만 요즘 브라우저는
+   모두 이 방식을 씁니다) */
+.popular-card-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  /* 두 줄일 때와 한 줄일 때 카드 높이가 달라지지 않게 두 줄 높이를 미리
+     확보합니다. 1.4(줄간격) × 2줄 = 2.8em */
+  min-height: 2.8em;
+
+  margin: 0 0 7px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.popular-cards a:hover .popular-card-title {
+  color: var(--brand-1);
+}
+
+/* ♥ 3  ......  작성자 */
+.popular-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.popular-card-likes {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--color-danger);
+}
+
+/* 닉네임이 길면 ... 으로 자릅니다. 안 자르면 좋아요 개수를 밀어냅니다. */
+.popular-card-writer {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 불러오는 동안 자리만 잡아두는 빈 카드입니다.
+   진짜 카드와 달리 안에 링크가 없으므로, 테두리와 사진 자리를 여기에 직접
+   그려서 크기를 똑같이 맞춥니다. */
+.popular-card-blank {
+  padding: 10px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+}
+
+/* 제목 두 줄 + 아래 정보 한 줄이 차지하던 높이만큼 남겨둡니다.
+   (2.8em + 7px 여백 + 정보 줄 한 줄) */
+.popular-card-blank .popular-thumb {
+  margin-bottom: calc(2.8em + 7px + 1.2em);
 }
 
 .post-list {
@@ -480,11 +637,36 @@ h2 {
   border-bottom: 1px solid var(--color-line);
 }
 
+/* 상세 페이지에 붙는 첨부 사진. 제목·작성자 아래, 본문 위에 옵니다.
+   max-height 로 화면 높이의 70% 에서 멈추게 합니다. 세로로 아주 긴 사진을
+   원본대로 두면 스크롤을 한참 내려야 본문과 댓글이 나오기 때문입니다. */
+.detail-image {
+  margin: 0 0 22px;
+  text-align: center;
+}
+
+.detail-image img {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-line);
+}
+
 .detail .content {
   min-height: 170px;
   white-space: pre-wrap; /* 줄바꿈 그대로 보여주기 */
   line-height: 1.85; /* 긴 글을 읽기 편하게 */
   font-size: 15px;
+}
+
+/* 사진이 있으면 본문의 최소 높이를 없앱니다.
+   min-height: 170px 은 글만 있는 짧은 글이 휑해 보이지 않게 둔 것인데,
+   사진이 이미 자리를 채운 뒤에는 본문 아래에 큰 빈칸으로 남습니다.
+
+   .detail-image + .content 는 "바로 앞에 .detail-image 가 있는 .content"
+   라는 뜻입니다. 사진이 없는 글에는 이 규칙이 닿지 않습니다. */
+.detail-image + .content {
+  min-height: 0;
 }
 
 /* ── 좋아요 ──────────────────────────────────────────────
@@ -543,14 +725,6 @@ h2 {
 .like-heart {
   font-size: 15px;
   line-height: 1;
-}
-
-/* 목록에서 제목 옆에 붙는 좋아요 개수 */
-.post-likes {
-  margin-left: 7px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-danger);
 }
 
 /* ── 댓글 ────────────────────────────────────────────────
@@ -777,6 +951,103 @@ h2 {
   font-size: 12px;
   line-height: 1.6;
   color: var(--color-text-muted);
+}
+
+/* ── 사진 첨부 (글쓰기 / 수정) ────────────────────────────
+   ImagePicker.jsx 가 씁니다. */
+
+/* 화면에서는 안 보이지만 스크린 리더와 키보드에는 그대로 남기는 방법입니다.
+   여기서는 진짜 <input type="file"> 을 숨기는 데 씁니다.
+
+   display: none 이나 visibility: hidden 을 쓰면 안 됩니다. 그 둘은 요소를
+   "없는 것"으로 만들어서 키보드 Tab 으로 옮겨갈 수 없고, 화면을 읽어주는
+   프로그램에도 들리지 않습니다. 파일 고르기는 label 을 눌러도 열리지만,
+   그것만 남으면 키보드로는 사진을 첨부할 방법이 사라집니다.
+
+   그래서 "없애는" 대신 "1px 짜리로 줄여서 잘라내는" 방식을 씁니다.
+   요소는 그대로 있으니 Tab 도 되고 읽히기도 하지만, 눈에는 안 보입니다.
+
+   선택자를 두 줄로 적은 이유:
+   위쪽 .form input 규칙이 폼 안의 모든 input 에 여백과 테두리를 줍니다.
+   그런데 CSS 는 나중에 적힌 규칙이 아니라 "더 자세히 짚은" 규칙을 따릅니다.
+   .form input(클래스 1 + 태그 1)이 .visually-hidden(클래스 1)보다 자세해서,
+   한 줄만 적으면 숨긴 칸에 여백과 테두리가 되살아납니다.
+   .form .visually-hidden(클래스 2)을 함께 적어 폼 안에서도 이기게 합니다. */
+.visually-hidden,
+.form .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.image-picker {
+  /* .form 이 세로 flex 라서 자식 사이에 gap 이 붙습니다.
+     사진 칸은 내용에 대한 설명이라 위 글자수 카운터에 붙여 두는 편이
+     한 덩어리로 읽힙니다. */
+  margin-top: 4px;
+}
+
+/* [사진 첨부] [사진 빼기]  JPG · PNG ... 를 한 줄에 놓습니다.
+   화면이 좁으면 안내 문구가 아래로 내려가게 flex-wrap 을 둡니다. */
+.image-picker-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* label 을 버튼처럼 쓰고 있습니다. .btn 이 이미 대부분을 맞춰주지만
+   label 은 버튼과 달리 글자를 끌어 선택할 수 있어서, 두 번 눌렀을 때
+   글자가 파랗게 잡히는 것을 막습니다. */
+.btn-file {
+  user-select: none;
+}
+
+/* label 에는 disabled 가 없습니다. (button 에만 있는 속성입니다)
+   그래서 등록/수정이 진행 중일 때는 이 규칙을 대신 붙여
+   .btn:disabled 와 같은 모습으로 만들고 클릭도 막습니다. */
+.btn-file-off {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.image-picker-hint {
+  font-size: 12px;
+  color: var(--color-text-faint);
+}
+
+/* 사진이 아닌 파일이나 너무 큰 파일을 골랐을 때 */
+.image-picker-error {
+  margin: 8px 2px 0;
+  font-size: 12.5px;
+  color: var(--color-danger);
+}
+
+/* 고른 사진 미리보기.
+   높이를 260px 로 묶어두는 이유: 세로로 긴 사진을 원본 크기로 두면 미리보기
+   하나가 화면을 가득 채워서 아래 [등록] 버튼이 보이지 않습니다.
+   object-fit: contain 은 "비율을 지키면서 이 안에 다 들어오게" 라는 뜻이라
+   사진이 찌그러지지 않습니다. */
+.image-preview {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-page);
+}
+
+.image-preview img {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
 }
 
 /* 글자수 카운터 (제목/내용 입력 아래 표시) */
