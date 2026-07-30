@@ -23,9 +23,21 @@ import { formatWriter } from '../format';
 // 카드로 보여줄 개수. 아래 CSS 의 3칸 배치와 맞춘 숫자입니다.
 const CARD_COUNT = 3;
 
-function PopularPosts() {
+// 넘겨받는 값
+// - hidden : true 면 이 자리를 비웁니다. 검색 중일 때 PostList 가 켭니다.
+//            (왜 PostList 가 아예 안 그리는 대신 이렇게 하는지는 아래 참고)
+function PopularPosts({ hidden = false }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // 인기글을 못 불러왔는지 여부입니다.
+  //
+  // 이 값이 없으면 조회가 실패해도 posts 가 빈 배열이라, 아래 "아직 아무도
+  // 좋아요를 누르지 않았으면 비운다" 와 똑같이 아무것도 안 나옵니다.
+  // 못 불러온 것과 인기글이 원래 없는 것은 다른 상황인데 화면이 같아서,
+  // 사용자는 인기글이 없는 줄로 알고 지나갑니다.
+  // (댓글의 hasLoadError 와 같은 방식입니다)
+  const [hasLoadError, setHasLoadError] = useState(false);
 
   useEffect(() => {
     async function fetchPopular() {
@@ -45,6 +57,7 @@ function PopularPosts() {
 
       if (error) {
         console.log('인기글 조회 에러:', error);
+        setHasLoadError(true);
         setLoading(false);
         return;
       }
@@ -55,6 +68,23 @@ function PopularPosts() {
 
     fetchPopular();
   }, []);
+
+  // 검색 중에는 이 자리를 비웁니다. 찾던 것과 상관없는 글이 검색 결과 위를
+  // 가리기 때문입니다.
+  //
+  // 이 판단을 PostList 가 아니라 여기서 하는 이유 ★
+  // PostList 쪽에서 `{!검색중 && <PopularPosts />}` 로 두면, 검색어를 지울 때마다
+  // 이 컴포넌트가 새로 태어납니다. 그러면 위 useEffect 가 다시 돌아 인기글을
+  // 처음부터 또 받아옵니다. 검색하고 지우기를 몇 번 하면 그만큼 조회가 늘고,
+  // 그때마다 빈 카드 세 장이 다시 보입니다.
+  //
+  // 여기서 null 을 돌려주면 컴포넌트는 살아 있습니다. 화면에서만 사라지고
+  // 받아둔 글은 그대로 들고 있으므로, 검색을 그만두는 순간 조회 없이 곧바로
+  // 다시 나옵니다. useState 와 useEffect 아래에 두는 것이 중요합니다.
+  // 훅은 그리는 것과 상관없이 늘 같은 순서로 불려야 합니다.
+  if (hidden) {
+    return null;
+  }
 
   // 불러오는 동안 아무것도 그리지 않으면, 카드가 도착하는 순간 아래 목록이
   // 통째로 밀려 내려갑니다. 그래서 크기가 같은 빈 카드로 자리를 잡아둡니다.
@@ -77,6 +107,21 @@ function PopularPosts() {
             </li>
           ))}
         </ul>
+      </section>
+    );
+  }
+
+  // 못 불러왔을 때는 그렇다고 알려줍니다.
+  // 조용히 비우면 아래 "좋아요받은 글이 없을 때" 와 화면이 똑같아져서,
+  // 인기글이 원래 없는 줄로 알고 지나가게 됩니다.
+  if (hasLoadError) {
+    return (
+      <section className="popular">
+        <div className="popular-head">
+          <h3 className="popular-title">인기글</h3>
+        </div>
+
+        <p className="empty">인기글을 불러오지 못했습니다.</p>
       </section>
     );
   }

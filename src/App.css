@@ -485,6 +485,15 @@ h2 {
   padding: 11px 18px;
 }
 
+/* 인기글 페이지는 제목 | 좋아요 | 작성자 | 작성일 4열입니다.
+   좋아요 열만 끼워 넣고 나머지 너비는 위와 같게 둬서, 두 목록을 오갈 때
+   작성자·작성일이 같은 자리에 있게 합니다. */
+.post-list-popular .post-list-head,
+.post-list-popular a,
+.post-list-popular .post-list-blank {
+  grid-template-columns: 1fr 70px 130px 120px;
+}
+
 /* 빈 줄은 선을 그리지 않되, 선이 차지하던 1px 자리는 그대로 둡니다.
    투명하게 두지 않으면 빈 줄이 있는 페이지만 선 개수만큼 높이가 줄어듭니다. */
 .post-list-blank {
@@ -548,6 +557,22 @@ h2 {
   font-size: 15.5px;
   font-weight: 500;
   transition: color 0.15s ease;
+}
+
+/* 좋아요 열은 인기글 페이지(.post-list-popular)에만 나옵니다.
+   개수는 두세 자라 잘릴 일이 없어서 ... 처리는 하지 않습니다. */
+.col-likes {
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-danger);
+}
+
+/* 머리글 줄의 '좋아요' 글자는 옆의 '작성자'·'작성일' 과 같아야 합니다.
+   빨간 하트 색은 숫자에만 씁니다. */
+.post-list-head .col-likes {
+  font-weight: inherit;
+  color: inherit;
 }
 
 .col-writer,
@@ -1351,6 +1376,13 @@ h2 {
     grid-template-columns: 1fr 80px;
     padding-left: 10px;
     padding-right: 10px;
+  }
+
+  /* 인기글 페이지도 작성자 열이 빠져서 제목 | 좋아요 | 작성일 3열이 됩니다. */
+  .post-list-popular .post-list-head,
+  .post-list-popular a,
+  .post-list-popular .post-list-blank {
+    grid-template-columns: 1fr 56px 80px;
   }
 
   .col-writer {

@@ -52,11 +52,31 @@ const SEARCH_DELAY = 300;
 // 안 됩니다. 3페이지를 보다가 검색했는데 결과가 1페이지뿐이면 없는 페이지가
 // 되어 404 화면이 뜹니다.
 //
+// 단, "검색 결과가 달라질 때" 만 지웁니다. ★
+// 예전에는 무조건 지웠는데, 그러면 결과가 그대로인 경우까지 1페이지로 튕겼습니다.
+//   - 3페이지를 보다가 검색어 없이 대상만 '작성자' 로 바꿀 때. 검색어가 없으면
+//     목록은 전체 글 그대로인데 보던 자리를 잃었습니다.
+//   - ?page=2&q=고양이(뒤에 공백) 같은 링크를 받았을 때. 주소의 공백을 떼어
+//     다시 적는 과정에서 2페이지가 날아가, 보낸 사람과 다른 화면을 봤습니다.
+//
+// 비교할 때 주소의 q 도 trim 하는 이유: 우리가 주소에 적는 값은 앞뒤 공백을
+// 떼어낸 값입니다. 그래서 '고양이 ' 와 '고양이' 는 글자로는 달라도 검색 결과가
+// 똑같습니다. 떼지 않고 비교하면 위의 두 번째 경우를 "달라졌다" 고 봅니다.
+//
+// 검색어가 없을 때 대상(type)은 비교에서 빼는 이유: 찾을 말이 없으면 제목으로
+// 찾든 작성자로 찾든 결과는 전체 글로 같습니다.
+//
 // 컴포넌트 밖에 둔 이유: 넘겨받은 값만으로 답이 정해지고 바깥 것을 하나도
 // 쳐다보지 않는 함수입니다. 밖에 두면 아래 useEffect 가 "이 함수도 바뀌었나"를
 // 신경 쓸 필요가 없어집니다.
 function buildSearchParams(currentParams, nextType, nextKeyword) {
   const nextParams = new URLSearchParams(currentParams);
+
+  const currentKeyword = (currentParams.get('q') || '').trim();
+  const currentType = normalizeSearchType(currentParams.get('type'));
+
+  const keywordChanged = currentKeyword !== nextKeyword;
+  const typeChanged = nextKeyword !== '' && currentType !== nextType;
 
   if (nextKeyword) {
     nextParams.set('q', nextKeyword);
@@ -70,7 +90,9 @@ function buildSearchParams(currentParams, nextType, nextKeyword) {
     nextParams.set('type', nextType);
   }
 
-  nextParams.delete('page');
+  if (keywordChanged || typeChanged) {
+    nextParams.delete('page');
+  }
 
   return nextParams;
 }
@@ -135,25 +157,6 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
   // 직전에 본 주소의 검색어입니다. 아래 한 가지 판단에만 씁니다.
   const [seenKeywordParam, setSeenKeywordParam] = useState(keywordParam);
 
-  // 주소가 바뀌었으면 입력칸을 거기에 맞춥니다.
-  //
-  // 언제 필요한가: 뒤로가기를 눌렀을 때, 헤더의 '유머 모음집' 을 눌러 조건 없는
-  // 주소로 갔을 때, "전체 목록 보기" 를 눌렀을 때입니다. 맞춰주지 않으면
-  // 목록은 전체 글을 보여주는데 입력칸에는 '고양이' 가 남아, 화면과 입력칸이
-  // 서로 다른 말을 하게 됩니다.
-  //
-  // 우리가 타이핑해서 주소를 바꾼 경우에도 이 자리를 지나가지만, 그때는 주소의
-  // 값과 입력칸의 값이 이미 같습니다. React 는 지금과 같은 값으로 setState 하면
-  // 다시 그리지 않으므로 아무 일도 일어나지 않습니다.
-  //
-  // useEffect 가 아니라 그리는 도중에 하는 이유: useEffect 는 화면을 한 번 그린
-  // 뒤에 실행됩니다. 그러면 옛 검색어가 든 입력칸이 한 번 보였다가 바뀌면서
-  // 깜빡입니다. 여기서 하면 React 가 그리기 전에 값을 고쳐 한 번에 나옵니다.
-  if (seenKeywordParam !== keywordParam) {
-    setSeenKeywordParam(keywordParam);
-    setKeywordInput(keywordParam);
-  }
-
   // 타이핑이 멈추고 SEARCH_DELAY 가 지나면 그때의 값이 여기로 넘어옵니다.
   const debouncedKeyword = useDebouncedValue(keywordInput, SEARCH_DELAY);
 
@@ -166,6 +169,53 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
   // keywordInput 으로 판단하면 '고' 를 치는 순간, 아직 조회도 안 했는데
   // "제목에 고가 들어간 글 0건" 이라는 틀린 안내가 스칩니다.
   const isSearching = searchedKeyword !== '';
+
+  // 입력칸에 글자가 들어 있는지입니다. 아래 인기글 카드를 감출 때만 씁니다. ★
+  //
+  // isSearching 을 쓰지 않는 이유: 그것은 300밀리초 뒤에야 참이 됩니다. 그러면
+  // 첫 글자를 치고 한참 있다가 카드가 사라져서, 검색어를 치고 있는 사이에
+  // 입력칸이 카드 높이만큼 위로 훌쩍 뛰어오릅니다. 커서가 그 안에 있는데
+  // 칸이 움직이는 것은 놀랍고, 무엇 때문에 움직였는지도 알기 어렵습니다.
+  // 이 값은 첫 글자에 바로 참이 되므로, 카드가 사라지는 것이 방금 누른 그
+  // 글자에 대한 반응으로 보입니다.
+  const isTypingKeyword = keywordInput.trim() !== '';
+
+  // 주소가 바뀌었으면 입력칸을 거기에 맞춥니다.
+  //
+  // 언제 필요한가: 뒤로가기를 눌렀을 때, 헤더의 '유머 모음집' 을 눌러 조건 없는
+  // 주소로 갔을 때, "전체 목록 보기" 를 눌렀을 때입니다. 맞춰주지 않으면
+  // 목록은 전체 글을 보여주는데 입력칸에는 '고양이' 가 남아, 화면과 입력칸이
+  // 서로 다른 말을 하게 됩니다.
+  //
+  // 반대로 우리가 타이핑해서 주소를 바꾼 경우에는 입력칸을 건드리면 안 됩니다. ★
+  // 처음에는 "그때는 주소와 입력칸의 값이 어차피 같으니 아무 일도 일어나지
+  // 않는다" 고 생각했는데, 두 값은 같지 않을 수 있습니다.
+  //
+  //   - 주소에 쓰는 값은 앞뒤 공백을 떼어낸 값입니다. '병은 ' 까지 치고 잠깐
+  //     멈추면 주소에는 '병은' 이 들어가는데, 그 값을 입력칸에 되쓰면 방금 친
+  //     공백이 지워집니다. 이어서 '병인데' 를 치면 '병은병인데' 가 되어,
+  //     띄어쓴 두 낱말로는 영영 검색할 수 없습니다.
+  //   - 주소를 쓰는 사이에 글자를 더 칠 수도 있습니다. 그러면 입력칸이 주소보다
+  //     앞서 있는데, 주소에 맞추면 그 글자가 사라집니다.
+  //
+  // 둘 다 위쪽 keywordInput 설명에 적어둔 "글자가 사라지는" 그 문제입니다.
+  //
+  // 그래서 "우리가 쓴 주소인지" 를 searchedKeyword 로 가려냅니다. ★
+  // 주소에 적는 값이 바로 이 searchedKeyword 라서, 주소의 검색어가 이것과 같다면
+  // 방금 우리가 쓴 것입니다. 이 값은 입력칸보다 한 박자 늦게 따라오므로,
+  // 위의 두 경우(공백을 떼어낸 주소, 입력칸이 앞서 있는 주소)에서 모두 주소와
+  // 짝이 맞습니다. 뒤로가기나 메뉴로 주소가 밖에서 바뀐 경우에는 다릅니다.
+  //
+  // useEffect 가 아니라 그리는 도중에 하는 이유: useEffect 는 화면을 한 번 그린
+  // 뒤에 실행됩니다. 그러면 옛 검색어가 든 입력칸이 한 번 보였다가 바뀌면서
+  // 깜빡입니다. 여기서 하면 React 가 그리기 전에 값을 고쳐 한 번에 나옵니다.
+  if (seenKeywordParam !== keywordParam) {
+    setSeenKeywordParam(keywordParam);
+
+    if (keywordParam !== searchedKeyword) {
+      setKeywordInput(keywordParam);
+    }
+  }
 
   // ?page 가 아예 없으면(pageParam 이 null) 그냥 1페이지입니다.
   let page = 1;
@@ -190,6 +240,22 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
       return;
     }
 
+    // 이번 조회가 아직 쓸모 있는지 적어두는 쪽지입니다. ★
+    //
+    // 왜 필요한가: 조회는 보낸 순서대로 답이 오지 않습니다. 검색어를 '고양이'
+    // 에서 '고양이가' 로 고치면 앞의 조회가 아직 오는 중인데 새 조회가 또
+    // 나가고, 앞의 답이 더 늦게 도착할 수 있습니다. 그러면 화면에는 '고양이가'
+    // 라고 써 있는데 목록은 '고양이' 의 결과가 됩니다.
+    //
+    // 2페이지 이상에서는 더 잘 보입니다. 검색어를 고치면 조회가 두 번 나갑니다.
+    // 검색어가 먼저 바뀌고(그때 page 는 아직 3), 그 다음에 주소에서 page 가
+    // 지워지면서 1페이지로 한 번 더 나가기 때문입니다. 3페이지짜리 답이 늦게
+    // 도착하면 목록은 빈 채로 "4건" 이라고만 적힌 화면이 됩니다.
+    //
+    // 취소가 아니라 "무시" 인 이유: 이미 보낸 조회를 되돌릴 방법은 없습니다.
+    // 답은 오게 두고, 그 답으로 화면을 고치지만 않으면 충분합니다.
+    let ignored = false;
+
     async function fetchPage() {
       setLoading(true);
 
@@ -203,18 +269,21 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
       // 목록에 필요한 컬럼만 가져옵니다. 본문(content)은 목록에서 한 글자도 쓰지
       // 않는데 가장 긴 컬럼이라, 빼는 것만으로 받아오는 양이 크게 줄어듭니다.
       //
-      // like_count 도 빼두었습니다. 인기글 정렬에는 쓰지만 정렬은 DB 안에서
-      // 일어나는 일이라, 그 컬럼을 받아올 필요는 없습니다.
-      // (좋아요 개수를 눈으로 보여주는 곳은 인기글 카드와 상세 페이지입니다)
-      //
+      // like_count 는 인기글 페이지에서만 받아옵니다. ★
+      // 거기는 좋아요 많은 순으로 줄을 세운 목록이라, 개수가 안 보이면 왜 이
+      // 순서인지 알 수 없습니다. 유머 모음집(최신순)에서는 보여줄 곳이 없어서
+      // 받지 않습니다. 정렬은 DB 안에서 일어나는 일이므로, 정렬에 쓰는 것만으로는
+      // 이 컬럼을 받아올 이유가 되지 않습니다.
+      const columns = isPopular
+        ? 'id, title, writer, created_at, like_count'
+        : 'id, title, writer, created_at';
+
       // count: 'exact' 는 "조건에 맞는 전체 글이 몇 개인지도 같이 알려줘"라는 뜻입니다.
       // 여기서 "조건에 맞는" 이 중요합니다. 검색 중이면 검색에 걸린 개수를 세주므로,
       // 아래 페이지 버튼 계산은 전체 목록일 때와 똑같은 코드로 동작합니다.
-      let query = supabase
-        .from('posts')
-        .select('id, title, writer, created_at', {
-          count: 'exact',
-        });
+      let query = supabase.from('posts').select(columns, {
+        count: 'exact',
+      });
 
       if (isPopular) {
         // 인기글 — 좋아요 많은 순. 좋아요가 0인 글은 인기글이 아니므로 뺍니다.
@@ -235,6 +304,13 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
       // 몇 번째까지" 를 자르는 것이라 순서가 뒤바뀌면 읽기 어려워집니다.
       const { data, count, error } = await query.range(from, to);
 
+      // 기다리는 동안 조건이 바뀌었으면 이 답은 늦게 온 답입니다.
+      // 화면을 건드리지 않고 그냥 돌아갑니다. (setLoading 도 하지 않습니다.
+      // 지금 나가 있는 새 조회가 아직 불러오는 중이기 때문입니다)
+      if (ignored) {
+        return;
+      }
+
       if (error) {
         console.log('에러:', error);
         setLoading(false); // 실패했어도 불러오기 시도는 끝났음
@@ -247,6 +323,13 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
     }
 
     fetchPage();
+
+    // 조건이 바뀌어 이 useEffect 를 다시 실행하기 직전에, React 가 여기를
+    // 먼저 불러줍니다. 화면에서 사라질 때도 불러줍니다. 그때 쪽지를 내려두면
+    // 방금 나간 조회의 답이 위에서 걸러집니다.
+    return () => {
+      ignored = true;
+    };
     // 검색 조건이 바뀌면 목록도 다시 받아와야 하므로 함께 지켜봅니다.
     //
     // keywordInput 이 아니라 searchedKeyword 를 지켜보는 것이 핵심입니다.
@@ -259,11 +342,20 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
   // 눌러 돌아와도, 링크를 복사해 보내도 같은 검색 결과가 나와야 합니다.
   // 상세 페이지는 글을 지운 뒤 돌아갈 페이지를 계산할 때도 이 값을 읽습니다.
   //
-  // replace: true 를 붙이는 이유 ★
-  // 이것을 빼면 검색할 때마다 방문 기록이 한 칸씩 쌓입니다. '고양이' 를
-  // 치다가 잠깐씩 멈추면 기록이 여러 개 생기고, 뒤로가기를 그만큼 눌러야
-  // 검색 전 화면으로 갑니다. replace 는 "새 기록을 쌓지 말고 지금 기록을
-  // 고쳐 써라" 라는 뜻입니다.
+  // replace 를 언제 붙이는지 ★
+  // replace 는 "새 기록을 쌓지 말고 지금 방문 기록을 고쳐 써라" 라는 뜻입니다.
+  //
+  // 처음에는 늘 붙였습니다. 안 붙이면 '고양이' 를 치다 잠깐씩 멈출 때마다 기록이
+  // 하나씩 생겨서, 뒤로가기를 그만큼 눌러야 검색 전 화면으로 가기 때문입니다.
+  //
+  // 그런데 늘 붙이면 첫 검색이 검색 전 화면의 기록을 덮어써 버립니다. 그러면
+  // 뒤로가기로 전체 목록에 돌아올 방법이 없어지고(뒤로가기가 그 이전 화면,
+  // 예를 들어 방금 보던 상세 페이지로 건너뜁니다), 검색을 되돌리려면 입력칸의
+  // 글자를 손으로 다 지워야 합니다.
+  //
+  // 그래서 첫 검색만 기록을 쌓고, 검색어를 다듬는 동안은 고쳐 씁니다.
+  // 가르는 기준은 "주소에 이미 q 가 있는지" 입니다. 있으면 검색 중에 검색어를
+  // 바꾸는 것이고, 없으면 전체 목록에서 검색을 시작하는 순간입니다.
   // (페이지 버튼은 그대로 기록을 쌓습니다. 뒤로가기로 이전 페이지에 돌아가는
   //  것은 자연스러운 동작이기 때문입니다)
   useEffect(() => {
@@ -292,10 +384,14 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
     // setSearchParams 에 함수를 넘기면 "지금 주소" 를 인자로 받습니다.
     // searchParams 를 직접 쓰지 않아도 되니, 아래 지켜보는 값 목록에서도
     // 빠져서 이 useEffect 가 검색어와 상관없이 다시 실행되는 일이 없습니다.
+    // 주소에 이미 검색어가 있으면 검색 중에 검색어를 다듬는 것입니다.
+    // (자세한 이유는 위 replace 설명에 적어두었습니다)
+    const isRefiningSearch = keywordParam !== '';
+
     setSearchParams(
       (previousParams) =>
         buildSearchParams(previousParams, searchType, searchedKeyword),
-      { replace: true },
+      { replace: isRefiningSearch },
     );
   }, [
     debouncedKeyword,
@@ -444,10 +540,14 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
         </Link>
       </div>
 
-      {/* 인기글 카드는 유머 모음집에서만, 그리고 검색 중이 아닐 때만 보여줍니다.
-          인기글 페이지(/popular)에서는 아래 목록이 이미 인기글이라 같은 글이
-          두 번 나오고, 검색 중에는 찾던 것과 상관없는 글이 결과 위를 가립니다. */}
-      {!isPopular && !isSearching && <PopularPosts />}
+      {/* 인기글 카드는 유머 모음집에서만 보여줍니다. 인기글 페이지(/popular)에서는
+          아래 목록이 이미 인기글이라 같은 글이 두 번 나옵니다.
+
+          검색 중에 감추는 일은 PopularPosts 안에서 합니다. 여기서 && 로 아예 안
+          그리게 하면, 검색어를 지울 때마다 컴포넌트가 새로 태어나 인기글 조회를
+          처음부터 다시 합니다. hidden 으로 넘기면 컴포넌트는 살아 있어서 받아둔
+          글을 그대로 들고 있다가, 검색을 그만두는 순간 조회 없이 다시 나옵니다. */}
+      {!isPopular && <PopularPosts hidden={isTypingKeyword} />}
 
       <SearchForm
         type={searchType}
@@ -513,10 +613,13 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
 
       {hasPosts && (
         <>
-          <ul className="post-list">
+          {/* 인기글 페이지는 좋아요 열이 하나 더 붙어서 열 너비가 다릅니다.
+              그 차이는 CSS 에서 .post-list-popular 로 처리합니다. */}
+          <ul className={isPopular ? 'post-list post-list-popular' : 'post-list'}>
             {/* 각 열이 무엇인지 알려주는 머리글 줄 (클릭 대상이 아님) */}
             <li className="post-list-head">
               <span className="col-title">제목</span>
+              {isPopular && <span className="col-likes">좋아요</span>}
               <span className="col-writer">작성자</span>
               <span className="col-date">작성일</span>
             </li>
@@ -526,11 +629,15 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
                 {/* 지금 보고 있는 목록 상태(페이지 번호 + 검색 조건)를 실어 보냅니다.
                     상세 페이지의 "목록으로" 가 이걸 읽어 제자리로 돌아옵니다. */}
                 <Link to={`/post/${post.id}?${detailQuery}`}>
-                  {/* 제목 옆에 좋아요 개수(♥ 3)를 붙였다가 뺐습니다.
-                      목록은 제목을 훑어보는 곳인데 숫자가 끼면 눈이 그쪽으로
-                      가서 정작 제목이 잘 안 읽힙니다.
-                      좋아요는 위 인기글 카드와 상세 페이지에서 보여줍니다. */}
+                  {/* 좋아요 개수는 인기글 페이지에서만 붙입니다. ★
+                      유머 모음집은 제목을 훑어보는 곳인데 숫자가 끼면 눈이
+                      그쪽으로 가서 정작 제목이 잘 안 읽힙니다. 하지만 인기글은
+                      좋아요 순으로 세운 목록이라, 개수가 없으면 유머 모음집과
+                      똑같이 생긴 목록이 알 수 없는 순서로 놓인 것이 됩니다. */}
                   <span className="col-title">{post.title}</span>
+                  {isPopular && (
+                    <span className="col-likes">♥ {post.like_count}</span>
+                  )}
                   <span className="col-writer">
                     {formatWriter(post.writer)}
                   </span>
