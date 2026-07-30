@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { useUser } from '../AuthContext';
 import Modal from './Modal';
@@ -11,6 +12,7 @@ import Modal from './Modal';
 //                      받아온 값이라, 개수를 세는 요청을 한 번 아끼려고 넘겨받습니다.
 function LikeButton({ postId, initialLikeCount }) {
   const user = useUser();
+  const navigate = useNavigate();
 
   // 화면에 보여줄 좋아요 개수
   const [likeCount, setLikeCount] = useState(initialLikeCount);
@@ -22,7 +24,16 @@ function LikeButton({ postId, initialLikeCount }) {
   const [isToggling, setIsToggling] = useState(false);
 
   // 안내 모달에 띄울 문구. 빈 문자열이면 닫힌 상태입니다.
+  // 요청이 실패했을 때처럼 "알려주기만 하면 되는" 경우에 씁니다.
   const [alertMessage, setAlertMessage] = useState('');
+
+  // 로그인하지 않은 사람이 눌렀을 때 뜨는 모달.
+  //
+  // 위의 alertMessage 와 따로 두는 이유: 이 모달에는 로그인 페이지로 보내는
+  // 버튼이 붙습니다. 안내만 하고 "그럼 어떻게 하라는 거지"를 사용자가 알아서
+  // 찾게 두는 대신, 갈 곳을 바로 내주는 편이 낫습니다.
+  // 문구만 갈아끼우는 방식으로는 버튼이 있는 모달과 없는 모달을 구분할 수 없습니다.
+  const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
 
   const userId = user ? user.id : null;
 
@@ -65,7 +76,7 @@ function LikeButton({ postId, initialLikeCount }) {
 
   async function handleToggle() {
     if (!user) {
-      setAlertMessage('로그인 후 이용할 수 있습니다.');
+      setIsLoginPromptOpen(true);
       return;
     }
 
@@ -153,6 +164,18 @@ function LikeButton({ postId, initialLikeCount }) {
         <span className="like-count">{likeCount}</span>
       </button>
 
+      {/* 로그인 안내 모달.
+          onConfirm 을 넘기면 Modal 이 [닫기 / 로그인하기] 두 버튼짜리가 됩니다. */}
+      <Modal
+        isOpen={isLoginPromptOpen}
+        message="로그인 후 이용할 수 있습니다."
+        cancelText="닫기"
+        confirmText="로그인하기"
+        onClose={() => setIsLoginPromptOpen(false)}
+        onConfirm={() => navigate('/login')}
+      />
+
+      {/* 요청이 실패했을 때 띄우는 안내 모달 (확인 버튼 하나) */}
       <Modal
         isOpen={alertMessage !== ''}
         message={alertMessage}
