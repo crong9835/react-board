@@ -5,6 +5,7 @@ import { useUser } from '../AuthContext';
 import { formatWriter, formatDate } from '../format';
 import {
   SEARCH_TYPES,
+  DEFAULT_SEARCH_TYPE,
   normalizeSearchType,
   getSearchTypeLabel,
   applySearch,
@@ -33,10 +34,19 @@ const SEARCH_DELAY = 300;
 
 // 지금 주소에서 검색 조건만 갈아 끼운 새 주소를 만들어 돌려줍니다.
 //
-// 검색어가 비어 있으면 q 와 type 을 아예 지웁니다. 그래서 입력칸의 글자를
-// 다 지우면 조건 없는 주소('/')가 되어 전체 목록으로 돌아옵니다.
+// 검색어가 비어 있으면 q 를 지웁니다. 그래서 입력칸의 글자를 다 지우면
+// 조건 없는 주소('/')가 되어 전체 목록으로 돌아옵니다.
 // 예전에는 이 일을 "검색 해제" 버튼이 했는데, 글자를 다 지운 사람이 원하는
 // 것은 어차피 전체 목록이라 버튼을 따로 누를 이유가 없습니다.
+//
+// 검색 대상(type)은 검색어가 없어도 지우지 않습니다. ★
+// 예전에는 q 와 함께 지웠는데, 그러면 검색어를 치기 전에 '작성자' 를 고를 수가
+// 없었습니다. 고르는 순간 type 이 주소에서 사라지고, 화면의 select 는 주소를
+// 보고 그리므로 곧바로 '제목' 으로 되돌아갔기 때문입니다. 검색어를 다 지웠을
+// 때도 마찬가지로 작성자 선택이 저절로 풀렸습니다.
+//
+// 대신 기본값(제목)일 때만 지웁니다. 늘 적어두면 평소에도 주소에
+// ?type=title 이 붙어 다니는데, 없을 때와 뜻이 똑같아서 붙일 이유가 없습니다.
 //
 // page 를 지우는 이유: 없으면 1페이지입니다. 보던 페이지 번호를 그대로 두면
 // 안 됩니다. 3페이지를 보다가 검색했는데 결과가 1페이지뿐이면 없는 페이지가
@@ -49,11 +59,15 @@ function buildSearchParams(currentParams, nextType, nextKeyword) {
   const nextParams = new URLSearchParams(currentParams);
 
   if (nextKeyword) {
-    nextParams.set('type', nextType);
     nextParams.set('q', nextKeyword);
   } else {
-    nextParams.delete('type');
     nextParams.delete('q');
+  }
+
+  if (nextType === DEFAULT_SEARCH_TYPE) {
+    nextParams.delete('type');
+  } else {
+    nextParams.set('type', nextType);
   }
 
   nextParams.delete('page');
@@ -324,9 +338,12 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
   // 검색 대상(제목/작성자)을 바꿨을 때. 이쪽은 기다릴 이유가 없어서 바로 씁니다.
   // 목록에서 하나 고르는 동작이라 "치는 도중" 이라는 것이 없기 때문입니다.
   //
-  // 검색어가 비어 있으면 아무 일도 일어나지 않습니다. 아래 buildSearchParams 가
-  // 검색어 없는 조건을 지워버리기 때문인데, 그게 맞습니다. 검색어 없이
-  // "작성자로 검색" 만 골라둔 상태는 전체 목록과 다를 것이 없습니다.
+  // 검색어가 비어 있어도 주소에 남습니다. 목록은 그대로 전체 글이지만,
+  // 골라둔 '작성자' 가 화면에 그대로 보이고 이어서 검색어를 치면 그 조건으로
+  // 찾습니다. (자세한 이유는 위 buildSearchParams 의 설명에 적어두었습니다)
+  //
+  // keywordInput.trim() 을 넘기는 이유: 검색어를 치던 도중에 대상을 바꿀 수도
+  // 있습니다. 그때는 300밀리초를 더 기다리지 말고 지금 친 값으로 바로 찾습니다.
   function handleTypeChange(nextType) {
     setSearchParams(
       (previousParams) =>
