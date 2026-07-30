@@ -6,6 +6,7 @@ import { formatWriter, formatDate } from '../format';
 import { normalizeSearchType, applySearch } from '../search';
 import Modal from '../components/Modal';
 import Comments from '../components/Comments';
+import LikeButton from '../components/LikeButton';
 
 // 한 페이지에 보여주는 글 개수입니다. PostList 의 PAGE_SIZE 와 같아야 합니다.
 // (삭제 후 돌아갈 페이지 번호를 올바르게 계산하는 데 씁니다.)
@@ -27,10 +28,15 @@ function PostDetail() {
   const keyword = (searchParams.get('q') || '').trim();
   const searchType = normalizeSearchType(searchParams.get('type'));
 
-  // 실려 온 조건을 그대로 달아 주소를 만듭니다.
+  // 어느 목록에서 들어왔는지. 인기글에서 왔으면 거기로 돌아가야 합니다.
+  // 어느 화면에서 왔는지를 기억하는 자리로 location.state 도 있지만,
+  // 그것은 새로고침하면 사라집니다. 주소에 두면 새로고침해도 남습니다.
+  const listBasePath = searchParams.get('from') === 'popular' ? '/popular' : '/';
+
+  // 조건을 달아 주소를 만듭니다.
   // 조건이 하나도 없으면(주소창으로 바로 들어온 경우) 물음표를 붙이지 않습니다.
-  function withListState(path) {
-    const query = searchParams.toString();
+  function withParams(path, params) {
+    const query = params.toString();
 
     if (!query) {
       return path;
@@ -41,7 +47,15 @@ function PostDetail() {
 
   // "목록으로" 를 눌렀을 때 갈 주소.
   // 조건을 그대로 달고 돌아가므로 보던 페이지와 검색 결과가 그대로 나옵니다.
-  const listPath = withListState('/');
+  // from 은 목록 주소에는 필요 없으므로(이미 /popular 로 가므로) 뺍니다.
+  const listParams = new URLSearchParams(searchParams);
+  listParams.delete('from');
+  const listPath = withParams(listBasePath, listParams);
+
+  // 수정 페이지에는 from 까지 그대로 넘깁니다.
+  // 수정을 마치면 상세로 돌아오는데, 그때 from 이 남아 있어야
+  // 거기서 "목록으로" 를 눌렀을 때 인기글로 돌아갑니다.
+  const editPath = withParams(`/edit/${id}`, new URLSearchParams(searchParams));
 
   // 이 글 하나만 담습니다. 못 찾았으면 계속 null 입니다.
   // (예전에는 App 이 받아둔 전체 글 배열에서 find 로 찾아 썼습니다.)
@@ -149,6 +163,13 @@ function PostDetail() {
       .from('posts')
       .select('id', { count: 'exact', head: true });
 
+    // 인기글에서 들어왔다면 그 목록의 조건(좋아요 1개 이상)도 함께 걸어야 합니다.
+    // 전체 글은 207개라도 인기글은 3개뿐일 수 있는데, 전체로 계산하면
+    // "2페이지는 있다"고 판단해 없는 페이지로 돌아갑니다.
+    if (listBasePath === '/popular') {
+      countQuery = countQuery.gt('like_count', 0);
+    }
+
     countQuery = applySearch(countQuery, searchType, keyword);
 
     const { count, error: countError } = await countQuery;
@@ -165,11 +186,12 @@ function PostDetail() {
 
     // 검색 조건은 그대로 두고 페이지 번호만 안전한 값으로 바꿔 끼웁니다.
     const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('from');
     nextParams.set('page', String(safePage));
 
     // 성공하면 목록으로 이동하므로 isDeleting 은 되돌리지 않아도 됩니다.
     // 목록은 열릴 때 스스로 다시 조회하므로, 지운 글은 자연히 사라져 있습니다.
-    navigate(`/?${nextParams.toString()}`);
+    navigate(`${listBasePath}?${nextParams.toString()}`);
   }
 
   // 아직 불러오는 중이면 "없음"이 아니라 "불러오는 중"으로 안내
@@ -192,6 +214,21 @@ function PostDetail() {
       </p>
       <p className="content">{post.content}</p>
 
+      {/* 좋아요 버튼. 본문 바로 아래 가운데에 둡니다.
+          개수는 이미 받아온 post.like_count 를 넘겨줍니다.
+
+          key 를 거는 이유: useState 의 초기값은 컴포넌트가 처음 나타날 때만
+          쓰입니다. 다른 글로 옮겨가도 이 컴포넌트는 살아 있어서, 그대로 두면
+          이전 글의 좋아요 개수가 남습니다. key 가 바뀌면 React 가 새로 만들어
+          초기값이 다시 들어갑니다. (SearchForm, PostEditForm 과 같은 이유) */}
+      <div className="like-area">
+        <LikeButton
+          key={postId}
+          postId={postId}
+          initialLikeCount={post.like_count}
+        />
+      </div>
+
       <div className="actions">
         {/* 왼쪽: 목록으로 — 보고 있던 페이지 번호를 그대로 달고 돌아갑니다 */}
         <button className="btn" onClick={() => navigate(listPath)}>
@@ -201,13 +238,7 @@ function PostDetail() {
         {/* 오른쪽: 본인 글일 때만 보이는 수정/삭제 */}
         {isOwner && (
           <div className="actions-right">
-            {/* 수정 페이지에도 목록 상태를 그대로 넘깁니다.
-                수정을 마치면 상세로 돌아오는데, 그때 이 조건이 남아 있어야
-                거기서 "목록으로" 를 눌렀을 때 보던 검색 결과로 돌아갑니다. */}
-            <button
-              className="btn"
-              onClick={() => navigate(withListState(`/edit/${id}`))}
-            >
+            <button className="btn" onClick={() => navigate(editPath)}>
               수정하기
             </button>
             <button
@@ -224,7 +255,7 @@ function PostDetail() {
           이 글의 id 만 넘기고, 조회·등록·삭제는 Comments 가 스스로 합니다.
           목록·상세·수정이 각자 필요한 만큼만 직접 조회하는 이 프로젝트의 방식과
           같습니다. 상세 페이지가 댓글까지 들고 있을 이유가 없습니다. */}
-      <Comments postId={postId} />
+      <Comments key={postId} postId={postId} />
 
       {/* 삭제 확인 모달 (취소 / 삭제 두 버튼) */}
       <Modal

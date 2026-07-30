@@ -22,8 +22,21 @@ const PAGE_SIZE = 15;
 // 검색어 입력칸의 최대 글자수. 제목이 30자까지라 그보다 길 이유가 없습니다.
 const KEYWORD_MAX = 30;
 
-function PostList() {
+// 목록 화면입니다. 두 곳에서 씁니다.
+//   /         유머 모음집 — 최신순
+//   /popular  인기글      — 좋아요 많은 순
+//
+// 파일을 따로 만들지 않은 이유: 목록 줄, 페이지 나누기, 검색이 전부 같습니다.
+// 새로 만들면 그대로 복사본이 되고, 나중에 목록을 고칠 때 두 군데를 고쳐야 합니다.
+// 다른 것은 제목과 정렬 기준뿐이라 그 둘만 넘겨받습니다.
+//
+// 넘겨받는 값
+// - heading : 화면 맨 위 제목. 기본값은 '유머 모음집'
+// - sortBy  : 'latest'(기본) 또는 'likes'
+function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
   const user = useUser();
+
+  const isPopular = sortBy === 'likes';
 
   // 보고 있는 페이지 번호와 검색 조건을 useState 가 아니라
   // 주소(?page=2&type=title&q=고양이)에 둡니다.
@@ -93,8 +106,21 @@ function PostList() {
       // 아래 페이지 버튼 계산은 전체 목록일 때와 똑같은 코드로 동작합니다.
       let query = supabase
         .from('posts')
-        .select('id, title, writer, created_at', { count: 'exact' })
-        .order('id', { ascending: false });
+        .select('id, title, writer, created_at, like_count', {
+          count: 'exact',
+        });
+
+      if (isPopular) {
+        // 인기글 — 좋아요 많은 순. 좋아요가 0인 글은 인기글이 아니므로 뺍니다.
+        // 좋아요 개수가 같으면 최신 글이 위로 오게 두 번째 기준을 답니다.
+        // (기준이 하나뿐이면 같은 개수끼리는 순서가 들쭉날쭉해집니다)
+        query = query
+          .gt('like_count', 0)
+          .order('like_count', { ascending: false })
+          .order('id', { ascending: false });
+      } else {
+        query = query.order('id', { ascending: false });
+      }
 
       // 검색어가 있으면 여기서 조건이 하나 얹힙니다. 없으면 그대로 전체 목록입니다.
       query = applySearch(query, searchType, keyword);
@@ -116,7 +142,7 @@ function PostList() {
 
     fetchPage();
     // 검색 조건이 바뀌면 목록도 다시 받아와야 하므로 함께 지켜봅니다.
-  }, [page, isBadPageParam, searchType, keyword]);
+  }, [page, isBadPageParam, searchType, keyword, isPopular]);
 
   let totalPages = Math.ceil(totalCount / PAGE_SIZE);
   if (totalPages === 0) {
@@ -234,12 +260,19 @@ function PostList() {
   // 그러면 상세에서 돌아올 때 몇 페이지였는지 알 수 없습니다.
   const detailParams = new URLSearchParams(searchParams);
   detailParams.set('page', String(page));
+
+  // 어느 목록에서 들어왔는지 함께 실어 보냅니다.
+  // 상세의 "목록으로" 가 이 값을 보고 인기글로 돌아갈지 정합니다.
+  if (isPopular) {
+    detailParams.set('from', 'popular');
+  }
+
   const detailQuery = detailParams.toString();
 
   return (
     <div>
       <div className="list-header">
-        <h2>유머 모음집</h2>
+        <h2>{heading}</h2>
         <Link to="/write" className="btn btn-primary">
           글쓰기
         </Link>
@@ -293,7 +326,19 @@ function PostList() {
         </div>
       )}
 
-      {isEmpty && !isSearching && (
+      {/* 인기글이 비어 있는 것은 글이 없다는 뜻이 아니라, 아직 아무도 좋아요를
+          누르지 않았다는 뜻입니다. "등록된 글이 없습니다" 라고 하면 글이 200개
+          있는데도 게시판이 텅 빈 것처럼 읽힙니다. */}
+      {isEmpty && !isSearching && isPopular && (
+        <div className="empty">
+          <p>아직 좋아요를 받은 글이 없습니다.</p>
+          <Link to="/" className="btn btn-primary">
+            전체 글 보기
+          </Link>
+        </div>
+      )}
+
+      {isEmpty && !isSearching && !isPopular && (
         <div className="empty">
           <p>등록된 글이 없습니다.</p>
           {/* 로그인하지 않았다면 눌러도 로그인 페이지로 튕기므로 보여주지 않습니다. */}
@@ -320,7 +365,14 @@ function PostList() {
                 {/* 지금 보고 있는 목록 상태(페이지 번호 + 검색 조건)를 실어 보냅니다.
                     상세 페이지의 "목록으로" 가 이걸 읽어 제자리로 돌아옵니다. */}
                 <Link to={`/post/${post.id}?${detailQuery}`}>
-                  <span className="col-title">{post.title}</span>
+                  <span className="col-title">
+                    {post.title}
+                    {/* 좋아요가 하나라도 있으면 제목 옆에 개수를 붙입니다.
+                        0인 글까지 ♥ 0 을 달면 목록이 지저분해집니다. */}
+                    {post.like_count > 0 && (
+                      <span className="post-likes">♥ {post.like_count}</span>
+                    )}
+                  </span>
                   <span className="col-writer">
                     {formatWriter(post.writer)}
                   </span>

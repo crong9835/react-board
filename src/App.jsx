@@ -22,7 +22,7 @@ import './App.css';
 // path 가 '/soon/...' 인 것은 아직 안 만든 메뉴라 "준비 중" 페이지로 갑니다.
 const NAV_MENUS = [
   { name: '유머 모음집', path: '/' },
-  { name: '인기글', path: '/soon/인기글' },
+  { name: '인기글', path: '/popular' },
   { name: '자유게시판', path: '/soon/자유게시판' },
   { name: '공지사항', path: '/soon/공지사항' },
 ];
@@ -115,6 +115,14 @@ function App() {
         <div className="card">
           <Routes>
             <Route path="/" element={<PostList />} />
+
+            {/* 인기글은 같은 목록 화면을 정렬 기준만 바꿔서 씁니다.
+                목록 줄·페이지 나누기·검색이 전부 같아서 파일을 나누면
+                그대로 복사본이 됩니다. */}
+            <Route
+              path="/popular"
+              element={<PostList heading="인기글" sortBy="likes" />}
+            />
 
             {/* 글쓰기는 로그인해야만 가능. 아니면 로그인 페이지로 보냅니다.
                 replace 를 안 붙이면 "목록 → 로그인" 이 방문 기록에 쌓여서,
