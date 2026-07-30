@@ -421,22 +421,14 @@ h2 {
   justify-content: center;
 }
 
-/* ── 안내 페이지 (준비 중 / 404) ─────────────────────────────
-   ComingSoon.jsx 와 NotFound.jsx 가 같이 씁니다.
-   둘 다 "여기엔 아무것도 없다"를 알리는 화면이라 생김새를 맞췄습니다. */
+/* ── 안내 페이지 (404) ───────────────────────────────────────
+   NotFound.jsx 가 씁니다. */
 .notice {
   text-align: center;
   padding: 40px 20px 32px;
 }
 
-/* 준비 중 페이지의 공사 이모지 🚧 */
-.notice-emoji {
-  margin: 0 0 12px;
-  font-size: 52px;
-  line-height: 1;
-}
-
-/* 404 페이지의 큰 숫자. 이모지 자리를 대신합니다. */
+/* 404 페이지의 큰 숫자 */
 .notice-code {
   margin: 0 0 4px;
   font-size: 68px;
@@ -469,32 +461,6 @@ h2 {
   font-size: 14px;
   line-height: 1.8;
   color: var(--color-text-muted);
-}
-
-/* 농담용 진행률 막대.
-   바깥(.progress)은 회색 홈, 안쪽(.progress-fill)이 보라색으로 채워진 부분입니다.
-   overflow: hidden 을 줘야 채워진 부분의 모서리가 홈 밖으로 삐져나오지 않습니다. */
-.progress {
-  width: 100%;
-  max-width: 280px;
-  height: 8px;
-  margin: 0 auto 10px;
-  border-radius: 999px;
-  background-color: var(--color-line);
-  overflow: hidden;
-}
-
-.progress-fill {
-  width: 7%;
-  height: 100%;
-  border-radius: 999px;
-  background-image: var(--brand-gradient);
-}
-
-.progress-caption {
-  margin: 0 0 28px;
-  font-size: 12.5px;
-  color: var(--color-text-faint);
 }
 
 /* ── 상세 ────────────────────────────────────────────────── */

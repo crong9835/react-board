@@ -15,16 +15,12 @@ import PostEdit from './pages/PostEdit';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import NotFound from './pages/NotFound';
-import ComingSoon from './pages/ComingSoon';
 import './App.css';
 
 // 헤더 네비게이션 메뉴 목록. 메뉴를 넣고 빼려면 이 배열만 고치면 됩니다.
-// path 가 '/soon/...' 인 것은 아직 안 만든 메뉴라 "준비 중" 페이지로 갑니다.
 const NAV_MENUS = [
   { name: '유머 모음집', path: '/' },
   { name: '인기글', path: '/popular' },
-  { name: '자유게시판', path: '/soon/자유게시판' },
-  { name: '공지사항', path: '/soon/공지사항' },
 ];
 
 // App 은 글 데이터를 들고 있지 않습니다. 각 페이지가 필요한 만큼만 직접 조회합니다.
@@ -144,9 +140,6 @@ function App() {
                 페이지가 사라져서 "회원가입이 완료되었습니다" 모달을 띄울 수 없습니다. */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-
-            {/* 아직 안 만든 메뉴. :name 자리에 메뉴 이름이 들어옵니다. (예: /soon/인기글) */}
-            <Route path="/soon/:name" element={<ComingSoon />} />
 
             {/* 위의 어떤 주소와도 맞지 않을 때 (예: /asdf) */}
             <Route path="*" element={<NotFound />} />

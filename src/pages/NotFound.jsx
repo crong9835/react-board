@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
 // 없는 주소를 쳤을 때 보여주는 페이지입니다. App.jsx 의 <Route path="*"> 가 씁니다.
-// 준비 중 페이지(ComingSoon)와 생김새를 맞추려고 같은 .notice 스타일을 씁니다.
+// 목록 페이지에서 없는 페이지 번호(?page=999)일 때도 이 화면을 씁니다.
 function NotFound() {
   return (
     <div className="notice">

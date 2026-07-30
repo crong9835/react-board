@@ -44,7 +44,6 @@ src/
    ├─ PostEdit.jsx    # 글 수정
    ├─ Login.jsx       # 로그인
    ├─ Signup.jsx      # 회원가입
-   ├─ ComingSoon.jsx  # 아직 만들지 않은 메뉴 안내
    └─ NotFound.jsx    # 없는 주소 안내
 ```
 
