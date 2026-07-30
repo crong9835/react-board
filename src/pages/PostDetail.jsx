@@ -5,6 +5,7 @@ import { useUser } from '../AuthContext';
 import { formatWriter, formatDate } from '../format';
 import { normalizeSearchType, applySearch } from '../search';
 import Modal from '../components/Modal';
+import Comments from '../components/Comments';
 
 // 한 페이지에 보여주는 글 개수입니다. PostList 의 PAGE_SIZE 와 같아야 합니다.
 // (삭제 후 돌아갈 페이지 번호를 올바르게 계산하는 데 씁니다.)
@@ -218,6 +219,12 @@ function PostDetail() {
           </div>
         )}
       </div>
+
+      {/* 댓글 목록 + 입력칸.
+          이 글의 id 만 넘기고, 조회·등록·삭제는 Comments 가 스스로 합니다.
+          목록·상세·수정이 각자 필요한 만큼만 직접 조회하는 이 프로젝트의 방식과
+          같습니다. 상세 페이지가 댓글까지 들고 있을 이유가 없습니다. */}
+      <Comments postId={postId} />
 
       {/* 삭제 확인 모달 (취소 / 삭제 두 버튼) */}
       <Modal
