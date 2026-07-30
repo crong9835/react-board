@@ -4,35 +4,68 @@ import {
   useSearchParams,
   Navigate,
 } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { useUser } from '../AuthContext';
 import Modal from '../components/Modal';
 
 // 이 파일에는 컴포넌트가 두 개 있습니다.
-//   1) PostEdit     — 글을 보여줘도 되는 상황인지 확인만 합니다.
+//   1) PostEdit     — 글을 불러오고, 보여줘도 되는 상황인지 확인합니다.
 //   2) PostEditForm — 실제 수정 폼. 글(post)이 확실히 있을 때만 나타납니다.
 //
 // 나눈 이유: useState 의 초기값은 컴포넌트가 "처음 나타날 때" 한 번만 쓰입니다.
-// 한 컴포넌트로 두면 새로고침 직후에는 글 목록이 아직 비어 있어서 제목/내용이
-// 빈 문자열('')로 굳어버리고, 나중에 글이 도착해도 폼은 빈 채로 남습니다.
+// 한 컴포넌트로 두면 글이 아직 도착하지 않은 동안 제목/내용이 빈 문자열('')로
+// 굳어버리고, 나중에 글이 도착해도 폼은 빈 채로 남습니다.
 // 폼을 떼어 두면 글이 도착한 뒤에야 폼이 나타나므로 초기값이 제대로 들어갑니다.
 
-function PostEdit({ posts, setPosts, loading }) {
+function PostEdit() {
   // 주소에서 꺼낸 값은 항상 문자열('3')이라, 숫자로 바꿔둬야 글의 id 와 비교됩니다.
   const { id } = useParams();
   const postId = Number(id);
 
   const user = useUser();
 
-  const post = posts.find((item) => item.id === postId);
-
   // 상세 페이지에서 실려 온 페이지 번호. 수정을 마치고 상세로 돌아갈 때
   // 그대로 달고 가야 거기서 "목록으로"를 눌렀을 때 보던 페이지로 돌아갑니다.
   const [searchParams] = useSearchParams();
   const page = Number(searchParams.get('page')) || 1;
 
-  // 아직 목록을 불러오는 중이면 "없음"이 아니라 "불러오는 중"으로 안내
+  // 고칠 글 하나만 담습니다. 못 찾았으면 계속 null 입니다.
+  // (예전에는 App 이 받아둔 전체 글 배열에서 find 로 찾아 썼습니다.)
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchPost() {
+      // /edit/abc 처럼 숫자가 아닌 주소면 postId 가 NaN 입니다.
+      // 그대로 조회하면 DB 가 에러를 내므로, 물어보지 않고 "없는 글"로 처리합니다.
+      if (!Number.isInteger(postId)) {
+        setLoading(false);
+        return;
+      }
+
+      // 폼 초기값으로 쓸 title·content 와, 본인 글인지 볼 user_id 가 필요합니다.
+      // maybeSingle() 은 행이 없으면 에러가 아니라 data 를 null 로 줍니다.
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('id', postId)
+        .maybeSingle();
+
+      if (error) {
+        console.log('조회 에러:', error);
+        setLoading(false);
+        return;
+      }
+
+      setPost(data);
+      setLoading(false);
+    }
+
+    fetchPost();
+  }, [postId]);
+
+  // 아직 불러오는 중이면 "없음"이 아니라 "불러오는 중"으로 안내
   if (loading) {
     return <p className="empty">불러오는 중...</p>;
   }
@@ -50,17 +83,10 @@ function PostEdit({ posts, setPosts, loading }) {
     return <Navigate to={detailPath} replace />;
   }
 
-  return (
-    <PostEditForm
-      post={post}
-      posts={posts}
-      setPosts={setPosts}
-      detailPath={detailPath}
-    />
-  );
+  return <PostEditForm post={post} detailPath={detailPath} />;
 }
 
-function PostEditForm({ post, posts, setPosts, detailPath }) {
+function PostEditForm({ post, detailPath }) {
   const navigate = useNavigate();
   const user = useUser();
 
@@ -132,11 +158,8 @@ function PostEditForm({ post, posts, setPosts, detailPath }) {
       return;
     }
 
-    // DB 가 실제로 저장한 행(data[0])을 그대로 넣습니다.
-    // 직접 만든 값이 아니라 저장된 값이라, 화면과 DB 가 어긋날 수 없습니다.
-    const updatedPost = data[0];
-    setPosts(posts.map((item) => (item.id === post.id ? updatedPost : item)));
-
+    // 고쳐진 내용을 화면에 다시 심어줄 필요가 없습니다.
+    // 상세 페이지가 열릴 때 스스로 DB 를 다시 읽으므로 저장된 값이 그대로 나옵니다.
     setGoToDetailAfterClose(true);
     openModal('수정되었습니다.');
   }

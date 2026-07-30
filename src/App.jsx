@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { supabase } from './supabase';
 import {
   Routes,
@@ -28,32 +27,17 @@ const NAV_MENUS = [
   { name: '공지사항', path: '/soon/공지사항' },
 ];
 
+// App 은 글 데이터를 들고 있지 않습니다. 각 페이지가 필요한 만큼만 직접 조회합니다.
+//   목록   → 그 페이지 15개, 목록에 쓰는 컬럼만
+//   상세   → 그 글 하나, 전 컬럼(본문 포함)
+//   수정   → 그 글 하나, 전 컬럼
+// 예전에는 여기서 전체 글을 한 번에 받아 세 페이지에 props 로 넘겼습니다. 상태가
+// 한 곳에 모여 편했지만, 글이 늘어날수록 첫 로딩이 계속 무거워지는 구조였습니다.
 function App() {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const user = useUser();
   const nickname = useNickname();
   const authLoading = useAuthLoading();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    async function fetchPosts() {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .order('id', { ascending: false });
-
-      if (error) {
-        console.log('에러:', error);
-        setLoading(false); // 실패했어도 불러오기 시도는 끝났음
-        return;
-      }
-      setPosts(data);
-      setLoading(false);
-    }
-
-    fetchPosts();
-  }, []);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -130,49 +114,21 @@ function App() {
       <main className="app">
         <div className="card">
           <Routes>
-            <Route
-              path="/"
-              element={<PostList posts={posts} loading={loading} />}
-            />
+            <Route path="/" element={<PostList />} />
 
             {/* 글쓰기는 로그인해야만 가능. 아니면 로그인 페이지로 보냅니다.
                 replace 를 안 붙이면 "목록 → 로그인" 이 방문 기록에 쌓여서,
                 뒤로가기를 눌러도 다시 로그인 페이지로 튕겨 나옵니다. */}
             <Route
               path="/write"
-              element={
-                user ? (
-                  <PostWrite posts={posts} setPosts={setPosts} />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
+              element={user ? <PostWrite /> : <Navigate to="/login" replace />}
             />
 
-            <Route
-              path="/post/:id"
-              element={
-                <PostDetail
-                  posts={posts}
-                  setPosts={setPosts}
-                  loading={loading}
-                />
-              }
-            />
+            <Route path="/post/:id" element={<PostDetail />} />
 
             <Route
               path="/edit/:id"
-              element={
-                user ? (
-                  <PostEdit
-                    posts={posts}
-                    setPosts={setPosts}
-                    loading={loading}
-                  />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
+              element={user ? <PostEdit /> : <Navigate to="/login" replace />}
             />
 
             {/* 이미 로그인한 사람을 홈으로 돌려보내는 처리는 각 페이지 안에서 합니다.

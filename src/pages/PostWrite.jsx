@@ -4,7 +4,7 @@ import { supabase } from '../supabase';
 import { useUser, useNickname } from '../AuthContext';
 import Modal from '../components/Modal';
 
-function PostWrite({ posts, setPosts }) {
+function PostWrite() {
   const navigate = useNavigate();
   const user = useUser();
   const nickname = useNickname();
@@ -53,18 +53,17 @@ function PostWrite({ posts, setPosts }) {
     // 글 목록은 로그인하지 않은 사람도 읽을 수 있어서(RLS 의 조회 정책이 누구나 허용),
     // 이메일을 저장해 두면 개발자도구 네트워크 탭에서 가입자 이메일을 그대로 볼 수
     // 있습니다. 화면에서만 가려서는 막을 수 없고, 애초에 DB 에 넣지 않아야 합니다.
-    const { data, error } = await supabase
-      .from('posts')
-      .insert([
-        {
-          title,
-          content,
-          writer: nickname,
-          user_id: user.id,
-        },
-      ])
-      .select()
-      .single();
+    // 저장된 행을 돌려받을 필요가 없어 .select() 를 붙이지 않습니다.
+    // 예전에는 돌려받은 행을 목록 배열 맨 앞에 끼워 화면을 맞췄지만, 지금은 목록이
+    // 열릴 때 스스로 1페이지를 다시 읽으므로 새 글이 맨 위에 그대로 나옵니다.
+    const { error } = await supabase.from('posts').insert([
+      {
+        title,
+        content,
+        writer: nickname,
+        user_id: user.id,
+      },
+    ]);
 
     // 실패했을 때 다시 시도할 수 있어야 하므로 성공·실패를 가리지 않고 풉니다.
     setIsSubmitting(false);
@@ -81,8 +80,6 @@ function PostWrite({ posts, setPosts }) {
       }
       return;
     }
-
-    setPosts([data, ...posts]);
 
     setGoToListAfterClose(true);
     openModal('등록되었습니다.');

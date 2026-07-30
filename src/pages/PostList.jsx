@@ -1,9 +1,19 @@
+import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { supabase } from '../supabase';
 import { useUser } from '../AuthContext';
 import { formatWriter, formatDate } from '../format';
 import NotFound from './NotFound';
 
-function PostList({ posts, loading }) {
+// 한 페이지에 보여줄 글 개수. 이 숫자만 바꾸면 전체 페이지 수와 버튼도 따라옵니다.
+// (상세 페이지의 POSTS_PER_PAGE 와 같은 값이어야 합니다.)
+//
+// 컴포넌트 밖에 둔 이유: 아래 useEffect 가 이 값을 쓰는데, 컴포넌트 안에 있으면
+// "언제 다시 실행할지" 목록에 넣어야 하는 값처럼 보입니다. 밖에 있으면 렌더와
+// 무관하게 늘 같은 값이라 그런 고민이 필요 없습니다.
+const PAGE_SIZE = 15;
+
+function PostList() {
   const user = useUser();
 
   // 보고 있는 페이지 번호를 useState 가 아니라 주소(?page=2)에 둡니다.
@@ -11,13 +21,15 @@ function PostList({ posts, loading }) {
   // 같은 페이지가 나옵니다.
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // 한 페이지에 보여줄 글 개수. 이 숫자만 바꾸면 전체 페이지 수와 버튼도 따라옵니다.
-  const pageSize = 15;
+  // 이번 페이지에 보여줄 글 15개만 담습니다.
+  // (예전에는 App 이 전체 글을 받아 props 로 넘겨줬습니다.)
+  const [posts, setPosts] = useState([]);
 
-  let totalPages = Math.ceil(posts.length / pageSize);
-  if (totalPages === 0) {
-    totalPages = 1; // 글이 하나도 없어도 1페이지는 있게
-  }
+  // 전체 글 개수. 페이지 버튼을 몇 개 만들지 계산하는 데 씁니다.
+  // 전체 글을 받아오지 않으니 posts.length 로는 알 수 없어서, DB 에게 따로 물어봅니다.
+  const [totalCount, setTotalCount] = useState(0);
+
+  const [loading, setLoading] = useState(true);
 
   // 주소에서 페이지 번호를 읽습니다. 주소는 사용자가 직접 고칠 수 있으므로
   // 없는 페이지 번호가 들어오면 목록 대신 404 화면을 보여줍니다.
@@ -26,7 +38,7 @@ function PostList({ posts, loading }) {
 
   // ?page 가 아예 없으면(pageParam 이 null) 그냥 1페이지입니다.
   let page = 1;
-  let isMissingPage = false;
+  let isBadPageParam = false;
 
   if (pageParam !== null) {
     const pageNumber = Number(pageParam);
@@ -36,12 +48,60 @@ function PostList({ posts, loading }) {
     if (Number.isInteger(pageNumber) && pageNumber >= 1) {
       page = pageNumber;
     } else {
-      isMissingPage = true;
+      isBadPageParam = true;
     }
   }
 
+  // 페이지가 바뀔 때마다 그 페이지 몫만 새로 받아옵니다.
+  useEffect(() => {
+    // 'abc' 같은 주소면 어차피 아래에서 404 화면을 보여주므로 조회하지 않습니다.
+    if (isBadPageParam) {
+      return;
+    }
+
+    async function fetchPage() {
+      setLoading(true);
+
+      // 앞에서 건너뛸 개수(offset). 2페이지면 15개를 건너뜁니다.
+      const from = (page - 1) * PAGE_SIZE;
+
+      // range 는 끝 번호를 "포함해서" 주기 때문에 1 을 빼야 정확히 15개가 옵니다.
+      // (slice(15, 30) 은 30번을 포함하지 않지만, range(15, 30) 은 포함해 16개를 줍니다.)
+      const to = from + PAGE_SIZE - 1;
+
+      // 목록에 필요한 컬럼만 가져옵니다. 본문(content)은 목록에서 한 글자도 쓰지
+      // 않는데 가장 긴 컬럼이라, 빼는 것만으로 받아오는 양이 크게 줄어듭니다.
+      //
+      // count: 'exact' 는 "조건에 맞는 전체 글이 몇 개인지도 같이 알려줘"라는 뜻입니다.
+      const { data, count, error } = await supabase
+        .from('posts')
+        .select('id, title, writer, created_at', { count: 'exact' })
+        .order('id', { ascending: false })
+        .range(from, to);
+
+      if (error) {
+        console.log('에러:', error);
+        setLoading(false); // 실패했어도 불러오기 시도는 끝났음
+        return;
+      }
+
+      setPosts(data);
+      setTotalCount(count);
+      setLoading(false);
+    }
+
+    fetchPage();
+  }, [page, isBadPageParam]);
+
+  let totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  if (totalPages === 0) {
+    totalPages = 1; // 글이 하나도 없어도 1페이지는 있게
+  }
+
+  let isMissingPage = isBadPageParam;
+
   // 전체 페이지 수를 넘어선 번호(?page=231213022)도 없는 페이지입니다.
-  // 단, 아직 불러오는 중이면 posts 가 비어 있어 totalPages 가 1이라
+  // 단, 아직 불러오는 중이면 totalCount 가 0이라 totalPages 가 1이어서
   // 멀쩡한 3페이지도 없는 페이지로 보입니다. 그래서 다 불러온 뒤에만 따집니다.
   if (!loading && page > totalPages) {
     isMissingPage = true;
@@ -56,17 +116,12 @@ function PostList({ posts, loading }) {
     setSearchParams({ page: String(nextPage) });
   }
 
-  // 이번 페이지에 보여줄 글만 잘라내기
-  const firstIndex = (page - 1) * pageSize;
-  const lastIndex = page * pageSize;
-  const currentPosts = posts.slice(firstIndex, lastIndex);
-
-  // 마지막 페이지는 글이 pageSize 보다 적을 수 있습니다. 그대로 두면 목록 높이가
+  // 마지막 페이지는 글이 PAGE_SIZE 보다 적을 수 있습니다. 그대로 두면 목록 높이가
   // 줄어들어 페이지를 옮길 때마다 화면이 출렁이므로, 모자란 만큼 빈 줄로 채웁니다.
   // 페이지가 하나뿐이면 옮겨 다닐 일이 없으므로 채우지 않습니다.
   const blankRowNumbers = [];
   if (totalPages > 1) {
-    for (let i = currentPosts.length; i < pageSize; i++) {
+    for (let i = posts.length; i < PAGE_SIZE; i++) {
       blankRowNumbers.push(i);
     }
   }
@@ -105,8 +160,13 @@ function PostList({ posts, loading }) {
 
   // 목록 자리에 셋 중 하나를 보여줍니다. 아래 화면에서 조건을 겹쳐 쓰지 않도록
   // 여기서 미리 이름을 붙여둡니다.
-  const isEmpty = !loading && posts.length === 0;
-  const hasPosts = !loading && posts.length > 0;
+  //
+  // "불러오는 중"은 보여줄 게 아무것도 없는 첫 진입에만 띄웁니다. 페이지를 옮기는
+  // 중에도 띄우면 목록이 사라졌다 나타나면서 화면 높이가 출렁이므로, 그때는 새 글이
+  // 도착할 때까지 이전 페이지 줄을 그대로 두었다가 한 번에 바꿉니다.
+  const isFirstLoad = loading && posts.length === 0;
+  const isEmpty = !loading && totalCount === 0;
+  const hasPosts = posts.length > 0;
 
   return (
     <div>
@@ -117,7 +177,7 @@ function PostList({ posts, loading }) {
         </Link>
       </div>
 
-      {loading && <p className="empty">불러오는 중...</p>}
+      {isFirstLoad && <p className="empty">불러오는 중...</p>}
 
       {isEmpty && (
         <div className="empty">
@@ -141,7 +201,7 @@ function PostList({ posts, loading }) {
               <span className="col-date">작성일</span>
             </li>
 
-            {currentPosts.map((post) => (
+            {posts.map((post) => (
               <li key={post.id}>
                 {/* 지금 보고 있는 페이지 번호를 주소에 실어 보냅니다.
                     상세 페이지의 "목록으로" 가 이 번호를 읽어 제자리로 돌아옵니다. */}
