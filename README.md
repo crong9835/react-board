@@ -23,7 +23,7 @@ React + Vite + Supabase로 만든 간단한 게시판입니다.
 
 ```
 src/
-├─ App.jsx            # 라우팅 + 헤더 + 게시글 목록 상태 관리
+├─ App.jsx            # 라우팅 + 헤더 (글 데이터는 각 페이지가 직접 조회)
 ├─ main.jsx           # 진입점 (Router / AuthProvider 설정)
 ├─ AuthContext.jsx    # 로그인 사용자 정보 Context
 ├─ authErrors.js      # Supabase 인증 에러 → 한글 메시지 변환
