@@ -4,6 +4,7 @@ import { supabase } from '../supabase';
 import { useUser } from '../AuthContext';
 import { formatWriter, formatDate } from '../format';
 import { normalizeSearchType, applySearch } from '../search';
+import { getImageUrl, removePostImage } from '../postImage';
 import Modal from '../components/Modal';
 import Comments from '../components/Comments';
 import LikeButton from '../components/LikeButton';
@@ -149,6 +150,16 @@ function PostDetail() {
       return;
     }
 
+    // 글이 지워졌으니 거기 붙어 있던 사진도 보관소에서 지웁니다.
+    //
+    // 글보다 먼저 지우지 않는 이유: 삭제가 DB(RLS)에 막히는 경우가 있는데
+    // (남의 글, 통신 실패) 사진을 먼저 지우면 글은 그대로 남고 사진만
+    // 사라집니다. 글이 확실히 지워진 뒤에 지워야 안전합니다.
+    //
+    // await 을 걸지 않습니다. 사진 삭제는 뒷정리라, 실패하든 느리든 사용자를
+    // 목록으로 보내는 일을 붙잡아 둘 이유가 없습니다. (postImage.js 참고)
+    removePostImage(post.image_path);
+
     // 삭제로 글이 줄면 보던 페이지가 사라질 수 있습니다.
     // 예: 글 16개(2페이지)에서 2페이지의 마지막 한 개를 지우면 이제 1페이지뿐인데,
     // 그대로 ?page=2 로 돌아가면 "없는 페이지"라 404 화면이 뜹니다.
@@ -205,6 +216,9 @@ function PostDetail() {
 
   const isOwner = user && post.user_id === user.id;
 
+  // 첨부된 사진의 주소. 사진이 없는 글이면 빈 문자열입니다.
+  const imageUrl = getImageUrl(post.image_path);
+
   return (
     <div className="detail">
       <h2>{post.title}</h2>
@@ -212,6 +226,16 @@ function PostDetail() {
         작성자: {formatWriter(post.writer)} · 작성일:{' '}
         {formatDate(post.created_at)}
       </p>
+
+      {/* 첨부된 사진이 있으면 본문 위에 보여줍니다.
+          유머 글은 사진이 주인공이고 본문이 설명인 경우가 많아서,
+          본문 아래에 두면 정작 볼 것을 스크롤해서 찾아야 합니다. */}
+      {imageUrl && (
+        <div className="detail-image">
+          <img src={imageUrl} alt="첨부한 사진" />
+        </div>
+      )}
+
       <p className="content">{post.content}</p>
 
       {/* 좋아요 버튼. 본문 바로 아래 가운데에 둡니다.

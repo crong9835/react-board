@@ -7,7 +7,9 @@ import {
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { useUser } from '../AuthContext';
+import { uploadPostImage, removePostImage, getImageUrl } from '../postImage';
 import Modal from '../components/Modal';
+import ImagePicker from '../components/ImagePicker';
 
 // 이 파일에는 컴포넌트가 두 개 있습니다.
 //   1) PostEdit     — 글을 불러오고, 보여줘도 되는 상황인지 확인합니다.
@@ -99,6 +101,19 @@ function PostEditForm({ post, detailPath }) {
   const [title, setTitle] = useState(post.title);
   const [content, setContent] = useState(post.content);
 
+  // 사진은 상태가 두 개 필요합니다. "안 건드림 / 바꿈 / 뺌" 세 가지를
+  // 구분해야 하는데, 값 하나로는 "뺌" 과 "안 건드림" 이 똑같이 null 이라
+  // 구분되지 않기 때문입니다.
+  //
+  //   imageFile      새로 고른 파일 (없으면 null)
+  //   isImageRemoved "사진 빼기" 를 눌렀는지
+  //
+  //   안 건드림 → imageFile = null,  isImageRemoved = false → 원래 경로 그대로
+  //   바꿈      → imageFile = 파일                          → 새로 올린 경로
+  //   뺌        → imageFile = null,  isImageRemoved = true  → null
+  const [imageFile, setImageFile] = useState(null);
+  const [isImageRemoved, setIsImageRemoved] = useState(false);
+
   // 모달(팝업) 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
@@ -141,9 +156,30 @@ function PostEditForm({ post, detailPath }) {
     // "내 글만 고친다"는 의도를 코드에도 드러내기 위해 함께 적습니다.
     setIsSubmitting(true);
 
+    // 저장할 사진 경로를 정합니다. 기본은 "안 건드림"(원래 경로 그대로)입니다.
+    let nextImagePath = post.image_path;
+
+    if (imageFile) {
+      // 바꿈 — 새 사진을 먼저 올려야 넣을 경로가 정해집니다.
+      // 옛 사진은 여기서 지우지 않습니다. 아래 수정이 실패하면 그 글은 여전히
+      // 옛 사진을 가리키고 있는데, 먼저 지워버리면 사진만 사라진 글이 됩니다.
+      const uploaded = await uploadPostImage(imageFile, user.id);
+
+      if (uploaded.error) {
+        setIsSubmitting(false);
+        openModal(uploaded.error);
+        return;
+      }
+
+      nextImagePath = uploaded.path;
+    } else if (isImageRemoved) {
+      // 뺌 — 경로를 비웁니다. 파일은 아래 수정이 성공한 뒤에 지웁니다.
+      nextImagePath = null;
+    }
+
     const { data, error } = await supabase
       .from('posts')
-      .update({ title: title, content: content })
+      .update({ title: title, content: content, image_path: nextImagePath })
       .eq('id', post.id)
       .eq('user_id', user.id)
       .select();
@@ -151,16 +187,34 @@ function PostEditForm({ post, detailPath }) {
     // 실패했을 때 다시 시도할 수 있어야 하므로 성공·실패를 가리지 않고 풉니다.
     setIsSubmitting(false);
 
+    // 수정이 이뤄지지 않은 두 경우를 함께 처리합니다.
+    // 방금 새 사진을 올렸다면, 그 사진은 어느 글도 가리키지 않는 파일이 되므로
+    // 도로 지웁니다. (imageFile 이 있을 때만 새로 올린 것입니다)
+    function cleanUpUploadedImage() {
+      if (imageFile) {
+        removePostImage(nextImagePath);
+      }
+    }
+
     if (error) {
       console.log('수정 에러:', error);
+      cleanUpUploadedImage();
       openModal('수정에 실패했습니다. 잠시 후 다시 시도해 주세요.');
       return;
     }
 
     // 돌아온 행이 없다 = DB가 "당신 글이 아니다"라며 막았다는 뜻
     if (data.length === 0) {
+      cleanUpUploadedImage();
       openModal('본인이 작성한 글만 수정할 수 있습니다.');
       return;
+    }
+
+    // 여기까지 왔으면 저장이 끝났습니다. 이제 쓰이지 않게 된 옛 사진을 지웁니다.
+    // 경로가 바뀌었을 때만 지워야 합니다. 사진을 안 건드렸으면 두 값이 같은데,
+    // 그때 지우면 방금 저장한 글의 사진을 지우는 셈이 됩니다.
+    if (post.image_path && post.image_path !== nextImagePath) {
+      removePostImage(post.image_path);
     }
 
     // 고쳐진 내용을 화면에 다시 심어줄 필요가 없습니다.
@@ -198,6 +252,31 @@ function PostEditForm({ post, detailPath }) {
         <p className="char-count">
           {content.length} / {CONTENT_MAX}
         </p>
+
+        {/* 사진 첨부 (선택).
+            existingUrl 은 "지금 저장돼 있는 사진" 입니다. 빼기를 눌렀으면
+            빈 문자열을 넘겨 미리보기에서 사라지게 합니다. 아직 저장 전이라
+            DB 의 image_path 는 그대로지만, 화면에는 저장 후의 모습을 보여주는
+            것이 맞습니다. */}
+        <ImagePicker
+          file={imageFile}
+          existingUrl={isImageRemoved ? '' : getImageUrl(post.image_path)}
+          onSelect={(file) => {
+            setImageFile(file);
+
+            // 빼기를 눌렀다가 마음을 바꿔 새 사진을 고른 경우입니다.
+            // 표시를 풀어두지 않으면 "뺌" 과 "바꿈" 이 겹쳐 헷갈립니다.
+            // (저장 로직은 imageFile 을 먼저 보므로 결과는 같지만,
+            //  상태가 사실과 다르게 남아 있으면 나중에 고칠 때 발목을 잡습니다)
+            setIsImageRemoved(false);
+          }}
+          onRemove={() => {
+            setImageFile(null);
+            setIsImageRemoved(true);
+          }}
+          disabled={isSubmitting}
+        />
+
         <div className="form-actions">
           {/* navigate(-1) 은 "브라우저 뒤로가기"와 같아서, 주소창에 /edit/3 을 직접
               쳐서 들어온 경우 앞 기록이 다른 사이트라 거기로 나가버립니다.

@@ -2,7 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { supabase } from '../supabase';
 import { useUser, useNickname } from '../AuthContext';
+import { uploadPostImage, removePostImage } from '../postImage';
 import Modal from '../components/Modal';
+import ImagePicker from '../components/ImagePicker';
 
 function PostWrite() {
   const navigate = useNavigate();
@@ -10,6 +12,10 @@ function PostWrite() {
   const nickname = useNickname();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+
+  // 첨부할 사진. 아직 올리지 않은, 사용자가 고르기만 한 파일입니다.
+  // 실제 업로드는 아래 handleSubmit 에서 등록과 함께 이뤄집니다.
+  const [imageFile, setImageFile] = useState(null);
 
   // 모달(팝업) 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,6 +53,27 @@ function PostWrite() {
 
     setIsSubmitting(true);
 
+    // 사진을 골랐으면 글보다 먼저 보관소에 올립니다.
+    //
+    // 순서가 이래야 하는 이유: posts 에 넣을 image_path 는 업로드가 끝나야
+    // 정해집니다. 글을 먼저 저장하고 사진을 나중에 올리면, 사진 업로드가
+    // 실패했을 때 이미 저장된 글을 되돌리거나 고쳐야 합니다.
+    //
+    // 사진이 없으면 image_path 는 null 로 저장됩니다.
+    let imagePath = null;
+
+    if (imageFile) {
+      const uploaded = await uploadPostImage(imageFile, user.id);
+
+      if (uploaded.error) {
+        setIsSubmitting(false);
+        openModal(uploaded.error);
+        return;
+      }
+
+      imagePath = uploaded.path;
+    }
+
     // user_id 를 같이 저장해야 나중에 "본인 글"인지 확인할 수 있습니다.
     //
     // writer 에는 이메일이 아니라 닉네임을 저장합니다.
@@ -62,6 +89,7 @@ function PostWrite() {
         content,
         writer: nickname,
         user_id: user.id,
+        image_path: imagePath,
       },
     ]);
 
@@ -70,6 +98,11 @@ function PostWrite() {
 
     if (error) {
       console.log('등록 에러:', error);
+
+      // 사진은 올라갔는데 글 저장이 실패한 경우입니다. 그대로 두면 어느 글에도
+      // 속하지 않은 파일이 보관소에 남으므로 방금 올린 것을 도로 지웁니다.
+      // (다시 등록을 누르면 어차피 새 이름으로 다시 올라갑니다)
+      removePostImage(imagePath);
 
       // 42501 = DB 의 RLS 정책이 이 저장을 거부했다는 뜻으로,
       // 여기서는 "시간당 10개" 작성 빈도 제한에 걸린 경우입니다.
@@ -114,6 +147,16 @@ function PostWrite() {
         <p className="char-count">
           {content.length} / {CONTENT_MAX}
         </p>
+
+        {/* 사진 첨부 (선택). 고르기만 하고 올리지는 않습니다.
+            실제 업로드는 위 handleSubmit 이 등록과 함께 합니다. */}
+        <ImagePicker
+          file={imageFile}
+          onSelect={(file) => setImageFile(file)}
+          onRemove={() => setImageFile(null)}
+          disabled={isSubmitting}
+        />
+
         <div className="form-actions">
           {/* navigate(-1) 은 "브라우저 뒤로가기"와 같아서, 주소창에 /write 를 직접
               쳐서 들어온 경우 앞 기록이 다른 사이트라 거기로 나가버립니다.
