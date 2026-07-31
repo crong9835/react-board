@@ -1,0 +1,257 @@
+/* PostList.jsx 전용 스타일입니다. */
+
+/* ── 목록 ────────────────────────────────────────────────── */
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.listHeader h2 {
+  margin: 0;
+}
+
+/* ── 검색 ────────────────────────────────────────────────
+   [제목 ▾] [검색어 ................................]
+   입력칸을 1fr 로 두어 남는 폭을 전부 차지하게 합니다.
+
+   예전에는 오른쪽에 [검색] 버튼이 있어서 칸이 셋이었습니다. 지금은 타이핑하면
+   바로 검색되므로 버튼을 없앴고, 그만큼 입력칸이 넓어졌습니다. */
+.searchForm {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+/* 입력칸 모양은 .form 의 규칙과 맞춰 게시판 전체가 같은 톤이 되게 합니다.
+   .form 안에 있지 않아서 그 규칙이 닿지 않으므로 여기에 다시 적습니다.
+
+   높이는 .btn 과 똑같이 34px 로 못 박습니다.
+   위아래 padding 으로 높이를 만들면 "글자 높이 + 여백"으로 정해지는데,
+   입력칸(14px 글자)과 버튼(13px 글자)은 글자 크기가 달라서 그대로 두면
+   나란히 놓인 [제목▾] [검색어] [검색] 의 높이가 서로 어긋납니다.
+   그래서 위아래 padding 을 0 으로 두고 높이만 고정했습니다.
+   (input 과 select 는 안의 글자를 알아서 세로 가운데에 놓습니다) */
+.searchSelect,
+.searchInput {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--color-line-mid);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg);
+  color: inherit;
+  font-family: inherit;
+  font-size: 14px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.searchSelect {
+  cursor: pointer;
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-faint);
+}
+
+.searchSelect:focus,
+.searchInput:focus {
+  outline: none;
+  border-color: var(--brand-1);
+  box-shadow: var(--focus-ring);
+}
+
+/* 검색 중일 때 목록 위에 뜨는 안내 줄.
+   예전에는 오른쪽 끝에 "검색 해제" 버튼이 함께 있어서 flex 로 양쪽에 밀어
+   놨습니다. 지금은 안내 문구뿐이라 그냥 한 줄로 둡니다. */
+.searchInfo {
+  margin: 0 0 12px;
+  padding: 9px 14px;
+  border-radius: var(--radius);
+  background-color: var(--brand-soft);
+  font-size: 13.5px;
+  color: var(--brand-1);
+}
+
+.searchInfo strong {
+  font-weight: 700;
+}
+
+.postList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* 실제 글 줄들 사이에만 얇은 선을 긋습니다.
+   :not(...) 은 "이 줄은 빼고" 라는 뜻이라, 머리글 줄과 빈 줄에는 선이 안 붙습니다. */
+.postList li:not(.postListHead):not(.postListBlank)
+  + li:not(.postListBlank) {
+  border-top: 1px solid var(--color-line);
+}
+
+/* 제목 | 작성자 | 작성일 3열.
+   1fr = 남는 공간을 제목이 전부 차지하고, 작성자/작성일은 너비를 고정합니다.
+   세 줄 종류(머리글 / 글 / 빈 줄)에 같은 규칙을 줘야 열과 높이가 맞습니다.
+
+   padding 위아래를 11px 로 낮게 잡은 것이 핵심입니다.
+   한 줄 높이가 약 45px 이라 열 줄이 450px 안에 들어옵니다. */
+.postListHead,
+.postList a,
+.postListBlank {
+  display: grid;
+  grid-template-columns: 1fr 130px 120px;
+  gap: 16px;
+  align-items: center;
+  padding: 11px 18px;
+}
+
+/* 인기글 페이지는 제목 | 좋아요 | 작성자 | 작성일 4열입니다.
+   좋아요 열만 끼워 넣고 나머지 너비는 위와 같게 둬서, 두 목록을 오갈 때
+   작성자·작성일이 같은 자리에 있게 합니다. */
+.postListPopular .postListHead,
+.postListPopular a,
+.postListPopular .postListBlank {
+  grid-template-columns: 1fr 70px 130px 120px;
+}
+
+/* 빈 줄은 선을 그리지 않되, 선이 차지하던 1px 자리는 그대로 둡니다.
+   투명하게 두지 않으면 빈 줄이 있는 페이지만 선 개수만큼 높이가 줄어듭니다. */
+.postListBlank {
+  border-top: 1px solid transparent;
+}
+
+/* 머리글 줄은 옅은 보라 알약 모양으로 만들어 표의 시작을 알립니다. */
+.postListHead {
+  margin-bottom: 4px;
+  border-radius: var(--radius);
+  background-color: var(--brand-soft);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-1);
+}
+
+/* 글 한 줄.
+   position: relative 는 아래 ::before(왼쪽 그라데이션 막대)를
+   이 줄을 기준으로 배치하기 위한 것입니다. */
+.postList a {
+  position: relative;
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.postList a:hover {
+  background-color: var(--brand-soft);
+}
+
+/* 마우스를 올리면 줄 왼쪽에 보라 막대가 나타납니다.
+   평소에는 높이 0 으로 접혀 있다가, 올리는 순간 위아래로 펼쳐집니다. */
+.postList a::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  border-radius: 3px;
+  background-image: var(--brand-gradient);
+  transition: height 0.15s ease;
+}
+
+.postList a:hover::before {
+  height: 18px;
+}
+
+.postList a:hover .colTitle {
+  color: var(--brand-1);
+}
+
+/* 제목이 길면 ... 으로 잘라서 옆 열을 밀어내지 않게 합니다. */
+.colTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15.5px;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+/* 좋아요 열은 인기글 페이지(.postListPopular)에만 나옵니다.
+   개수는 두세 자라 잘릴 일이 없어서 ... 처리는 하지 않습니다. */
+.colLikes {
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-danger);
+}
+
+/* 머리글 줄의 '좋아요' 글자는 옆의 '작성자'·'작성일' 과 같아야 합니다.
+   빨간 하트 색은 숫자에만 씁니다. */
+.postListHead .colLikes {
+  font-weight: inherit;
+  color: inherit;
+}
+
+.colWriter,
+.colDate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* ── 페이지 번호 ─────────────────────────────────────────── */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* 번호 버튼은 정사각형에 가깝게 줄입니다. */
+.pagination :global(.btn) {
+  height: 32px;
+  min-width: 32px;
+  padding: 0 9px;
+  font-size: 12.5px;
+}
+
+@media (max-width: 560px) {
+  .postListHead,
+  .postList a,
+  .postListBlank {
+    /* 화면이 좁으면 작성자 열을 숨겨 제목이 찌그러지지 않게 합니다. */
+    grid-template-columns: 1fr 80px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  /* 인기글 페이지도 작성자 열이 빠져서 제목 | 좋아요 | 작성일 3열이 됩니다. */
+  .postListPopular .postListHead,
+  .postListPopular a,
+  .postListPopular .postListBlank {
+    grid-template-columns: 1fr 56px 80px;
+  }
+
+  .colWriter {
+    display: none;
+  }
+}
+
+/* 움직임을 줄이도록 설정한 사용자에게는 애니메이션을 끕니다. */
+@media (prefers-reduced-motion: reduce) {
+  .postList a::before {
+    transition: none;
+  }
+}

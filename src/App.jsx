@@ -15,7 +15,7 @@ import PostEdit from './pages/PostEdit';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import NotFound from './pages/NotFound';
-import './App.css';
+import styles from './App.module.css';
 
 // 헤더 네비게이션 메뉴 목록. 메뉴를 넣고 빼려면 이 배열만 고치면 됩니다.
 const NAV_MENUS = [
@@ -45,8 +45,8 @@ function App() {
   // 로그인 페이지로 튕겨버립니다.
   if (authLoading) {
     return (
-      <div className="page">
-        <main className="app">
+      <div className={styles.page}>
+        <main className={styles.app}>
           <p className="empty">불러오는 중...</p>
         </main>
       </div>
@@ -58,10 +58,10 @@ function App() {
   //   .header       화면 전체 폭을 쓰는 띠. 안쪽 .header-inner 만 폭을 제한합니다.
   //   .app > .card  본문. 배경 위에 떠 있는 흰 카드입니다.
   return (
-    <div className="page">
-      <header className="header">
-        <div className="header-inner">
-          <Link to="/" className="logo">
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <Link to="/" className={styles.logo}>
             <h1>와이라누</h1>
           </Link>
 
@@ -70,14 +70,16 @@ function App() {
               end 를 붙인 이유: '/' 는 모든 주소의 앞부분과 겹쳐서, end 가 없으면
               /post/3 을 볼 때도 '유머 모음집' 이 켜진 것으로 표시됩니다.
               end 는 "주소가 정확히 같을 때만" 이라는 뜻입니다. */}
-          <nav className="nav">
+          <nav className={styles.nav}>
             {NAV_MENUS.map((menu) => (
               <NavLink
                 key={menu.path}
                 to={menu.path}
                 end={menu.path === '/'}
                 className={({ isActive }) =>
-                  isActive ? 'nav-link nav-link-active' : 'nav-link'
+                  isActive
+                    ? `${styles.navLink} ${styles.navLinkActive}`
+                    : styles.navLink
                 }
               >
                 {menu.name}
@@ -85,10 +87,10 @@ function App() {
             ))}
           </nav>
 
-          <div className="auth-menu">
+          <div className={styles.authMenu}>
             {user ? (
               <>
-                <span className="user-email">{nickname}</span>
+                <span className={styles.userEmail}>{nickname}</span>
                 <button className="btn" onClick={handleLogout}>
                   로그아웃
                 </button>
@@ -107,8 +109,8 @@ function App() {
         </div>
       </header>
 
-      <main className="app">
-        <div className="card">
+      <main className={styles.app}>
+        <div className={styles.card}>
           <Routes>
             <Route path="/" element={<PostList />} />
 

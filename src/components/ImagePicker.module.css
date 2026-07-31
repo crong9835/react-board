@@ -1,0 +1,96 @@
+/* ImagePicker.jsx 전용 스타일입니다. */
+
+/* 화면에서는 안 보이지만 스크린 리더와 키보드에는 그대로 남기는 방법입니다.
+   여기서는 진짜 <input type="file"> 을 숨기는 데 씁니다.
+
+   display: none 이나 visibility: hidden 을 쓰면 안 됩니다. 그 둘은 요소를
+   "없는 것"으로 만들어서 키보드 Tab 으로 옮겨갈 수 없고, 화면을 읽어주는
+   프로그램에도 들리지 않습니다. 파일 고르기는 label 을 눌러도 열리지만,
+   그것만 남으면 키보드로는 사진을 첨부할 방법이 사라집니다.
+
+   그래서 "없애는" 대신 "1px 짜리로 줄여서 잘라내는" 방식을 씁니다.
+   요소는 그대로 있으니 Tab 도 되고 읽히기도 하지만, 눈에는 안 보입니다.
+
+   선택자를 두 줄로 적은 이유:
+   common.css 의 .form input 규칙이 폼 안의 모든 input 에 여백과 테두리를 줍니다.
+   그런데 CSS 는 나중에 적힌 규칙이 아니라 "더 자세히 짚은" 규칙을 따릅니다.
+   .form input(클래스 1 + 태그 1)이 .visuallyHidden(클래스 1)보다 자세해서,
+   한 줄만 적으면 숨긴 칸에 여백과 테두리가 되살아납니다.
+   :global(.form) .visuallyHidden(클래스 2)을 함께 적어 폼 안에서도 이기게 합니다.
+   .form 은 common.css 의 전역 클래스라 :global() 로 가리킵니다. */
+.visuallyHidden,
+:global(.form) .visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.imagePicker {
+  /* .form 이 세로 flex 라서 자식 사이에 gap 이 붙습니다.
+     사진 칸은 내용에 대한 설명이라 위 글자수 카운터에 붙여 두는 편이
+     한 덩어리로 읽힙니다. */
+  margin-top: 4px;
+}
+
+/* [사진 첨부] [사진 빼기]  JPG · PNG ... 를 한 줄에 놓습니다.
+   화면이 좁으면 안내 문구가 아래로 내려가게 flex-wrap 을 둡니다. */
+.imagePickerActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* label 을 버튼처럼 쓰고 있습니다. .btn 이 이미 대부분을 맞춰주지만
+   label 은 버튼과 달리 글자를 끌어 선택할 수 있어서, 두 번 눌렀을 때
+   글자가 파랗게 잡히는 것을 막습니다. */
+.btnFile {
+  user-select: none;
+}
+
+/* label 에는 disabled 가 없습니다. (button 에만 있는 속성입니다)
+   그래서 등록/수정이 진행 중일 때는 이 규칙을 대신 붙여
+   .btn:disabled 와 같은 모습으로 만들고 클릭도 막습니다. */
+.btnFileOff {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.imagePickerHint {
+  font-size: 12px;
+  color: var(--color-text-faint);
+}
+
+/* 사진이 아닌 파일이나 너무 큰 파일을 골랐을 때 */
+.imagePickerError {
+  margin: 8px 2px 0;
+  font-size: 12.5px;
+  color: var(--color-danger);
+}
+
+/* 고른 사진 미리보기.
+   높이를 260px 로 묶어두는 이유: 세로로 긴 사진을 원본 크기로 두면 미리보기
+   하나가 화면을 가득 채워서 아래 [등록] 버튼이 보이지 않습니다.
+   object-fit: contain 은 "비율을 지키면서 이 안에 다 들어오게" 라는 뜻이라
+   사진이 찌그러지지 않습니다. */
+.imagePreview {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-page);
+}
+
+.imagePreview img {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+}

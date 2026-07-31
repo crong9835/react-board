@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { getImageUrl } from '../postImage';
 import { formatWriter } from '../format';
+import styles from './PopularPosts.module.css';
 
 // 유머 모음집(/) 맨 위에 붙는 인기글 카드입니다.
 //
@@ -91,19 +92,19 @@ function PopularPosts({ hidden = false }) {
   // (목록 마지막 페이지를 빈 줄로 채우는 것과 같은 이유입니다)
   if (loading) {
     return (
-      <section className="popular">
-        <div className="popular-head">
-          <h3 className="popular-title">인기글</h3>
+      <section className={styles.popular}>
+        <div className={styles.popularHead}>
+          <h3 className={styles.popularTitle}>인기글</h3>
         </div>
 
-        <ul className="popular-cards">
+        <ul className={styles.popularCards}>
           {/* 내용 없이 자리만 차지하는 카드 세 장.
               Array.from({ length: 3 }) 는 칸이 세 개인 빈 배열을 만듭니다.
               지도(map)를 돌리려면 배열이 있어야 하는데, 보여줄 글이 아직
               없으므로 개수만 있는 배열을 만들어 씁니다. */}
           {Array.from({ length: CARD_COUNT }).map((value, index) => (
-            <li key={index} className="popular-card-blank">
-              <div className="popular-thumb" />
+            <li key={index} className={styles.popularCardBlank}>
+              <div className={styles.popularThumb} />
             </li>
           ))}
         </ul>
@@ -116,9 +117,9 @@ function PopularPosts({ hidden = false }) {
   // 인기글이 원래 없는 줄로 알고 지나가게 됩니다.
   if (hasLoadError) {
     return (
-      <section className="popular">
-        <div className="popular-head">
-          <h3 className="popular-title">인기글</h3>
+      <section className={styles.popular}>
+        <div className={styles.popularHead}>
+          <h3 className={styles.popularTitle}>인기글</h3>
         </div>
 
         <p className="empty">인기글을 불러오지 못했습니다.</p>
@@ -134,19 +135,19 @@ function PopularPosts({ hidden = false }) {
   }
 
   return (
-    <section className="popular">
-      <div className="popular-head">
-        <h3 className="popular-title">인기글</h3>
+    <section className={styles.popular}>
+      <div className={styles.popularHead}>
+        <h3 className={styles.popularTitle}>인기글</h3>
 
         {/* 좋아요받은 글 전체를 보는 곳으로 넘어갑니다.
             헤더의 '인기글' 메뉴와 같은 곳이지만, 카드를 보다가 더 보고 싶어진
             사람이 화면 위쪽까지 눈을 옮기지 않아도 되게 여기에도 둡니다. */}
-        <Link to="/popular" className="popular-more">
+        <Link to="/popular" className={styles.popularMore}>
           더보기
         </Link>
       </div>
 
-      <ul className="popular-cards">
+      <ul className={styles.popularCards}>
         {posts.map((post) => {
           // 사진이 없는 글이면 빈 문자열입니다.
           const imageUrl = getImageUrl(post.image_path);
@@ -160,7 +161,7 @@ function PopularPosts({ hidden = false }) {
                   맨 위에 있으므로, 상세에서 "목록으로"를 누르면 조건 없는
                   유머 모음집 1페이지 — 즉 방금 있던 자리로 돌아갑니다. */}
               <Link to={`/post/${post.id}`}>
-                <div className="popular-thumb">
+                <div className={styles.popularThumb}>
                   {imageUrl ? (
                     <img src={imageUrl} alt="" />
                   ) : (
@@ -171,17 +172,17 @@ function PopularPosts({ hidden = false }) {
                     // 는 뜻입니다. 이 글자는 꾸밈일 뿐이고, 바로 아래에 제목이
                     // 있어서 읽어줄 필요가 없습니다.
                     // (사진의 alt="" 도 같은 이유로 비워뒀습니다)
-                    <span className="popular-thumb-empty" aria-hidden="true">
+                    <span className={styles.popularThumbEmpty} aria-hidden="true">
                       ㅋ
                     </span>
                   )}
                 </div>
 
-                <p className="popular-card-title">{post.title}</p>
+                <p className={styles.popularCardTitle}>{post.title}</p>
 
-                <p className="popular-card-meta">
-                  <span className="popular-card-likes">♥ {post.like_count}</span>
-                  <span className="popular-card-writer">
+                <p className={styles.popularCardMeta}>
+                  <span className={styles.popularCardLikes}>♥ {post.like_count}</span>
+                  <span className={styles.popularCardWriter}>
                     {formatWriter(post.writer)}
                   </span>
                 </p>

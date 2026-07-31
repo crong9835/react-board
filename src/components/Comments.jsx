@@ -4,6 +4,7 @@ import { supabase } from '../supabase';
 import { useUser, useNickname } from '../AuthContext';
 import { formatDate } from '../format';
 import Modal from './Modal';
+import styles from './Comments.module.css';
 
 // 댓글 한 개의 최대 글자수
 const CONTENT_MAX = 200;
@@ -236,9 +237,9 @@ function Comments({ postId }) {
   const isFirstLoad = loading && comments.length === 0;
 
   return (
-    <div className="comments">
-      <h3 className="comments-title">
-        댓글 <span className="comments-count">{totalCount}</span>
+    <div className={styles.comments}>
+      <h3 className={styles.commentsTitle}>
+        댓글 <span className={styles.commentsCount}>{totalCount}</span>
       </h3>
 
       {isFirstLoad && <p className="empty">불러오는 중...</p>}
@@ -256,7 +257,7 @@ function Comments({ postId }) {
       {remainingCount > 0 && (
         <button
           type="button"
-          className="comment-more"
+          className={styles.commentMore}
           onClick={() => setLoadedCount(loadedCount + COMMENTS_PER_LOAD)}
           disabled={loading}
         >
@@ -265,7 +266,7 @@ function Comments({ postId }) {
       )}
 
       {comments.length > 0 && (
-        <ul className="comment-list">
+        <ul className={styles.commentList}>
           {comments.map((comment) => {
             // 내 댓글일 때만 삭제 버튼을 보여줍니다.
             // 실제 차단은 DB(RLS)가 하므로 이것은 보안이 아니라,
@@ -273,21 +274,21 @@ function Comments({ postId }) {
             const isOwner = user && comment.user_id === user.id;
 
             return (
-              <li key={comment.id} className="comment">
-                <div className="comment-head">
+              <li key={comment.id} className={styles.comment}>
+                <div className={styles.commentHead}>
                   {/* writer 에는 닉네임만 들어갑니다. 이 표는 새로 만든 것이라
                       옛 이메일이 섞여 있을 일이 없어 그대로 보여줍니다.
                       (목록·상세의 formatWriter 는 이메일이 저장돼 있던 시절의
                        옛 글을 위한 처리입니다) */}
-                  <span className="comment-writer">{comment.writer}</span>
-                  <span className="comment-date">
+                  <span className={styles.commentWriter}>{comment.writer}</span>
+                  <span className={styles.commentDate}>
                     {formatDate(comment.created_at)}
                   </span>
 
                   {isOwner && (
                     <button
                       type="button"
-                      className="comment-delete"
+                      className={styles.commentDelete}
                       onClick={() => setDeleteTargetId(comment.id)}
                     >
                       삭제
@@ -297,7 +298,7 @@ function Comments({ postId }) {
 
                 {/* 댓글은 줄바꿈을 그대로 살려서 보여줍니다.
                     (CSS 의 white-space: pre-wrap 이 그 일을 합니다) */}
-                <p className="comment-content">{comment.content}</p>
+                <p className={styles.commentContent}>{comment.content}</p>
               </li>
             );
           })}
@@ -305,7 +306,7 @@ function Comments({ postId }) {
       )}
 
       {user ? (
-        <form className="comment-form" onSubmit={handleSubmit}>
+        <form className={styles.commentForm} onSubmit={handleSubmit}>
           <textarea
             placeholder="댓글을 입력하세요"
             aria-label="댓글 내용"
@@ -313,7 +314,7 @@ function Comments({ postId }) {
             maxLength={CONTENT_MAX}
             onChange={(e) => setContent(e.target.value)}
           />
-          <div className="comment-form-actions">
+          <div className={styles.commentFormActions}>
             <p className="char-count">
               {content.length} / {CONTENT_MAX}
             </p>
@@ -327,7 +328,7 @@ function Comments({ postId }) {
           </div>
         </form>
       ) : (
-        <p className="comment-login">
+        <p className={styles.commentLogin}>
           <Link to="/login">로그인</Link> 후 댓글을 작성할 수 있습니다.
         </p>
       )}

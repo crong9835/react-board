@@ -1,0 +1,51 @@
+/* LikeButton.jsx 전용 스타일입니다. */
+
+/* 평소에는 테두리만 있는 버튼, 눌러두면 색이 채워집니다. */
+.likeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 20px;
+  border: 1px solid var(--color-line-mid);
+  border-radius: 999px; /* 알약 모양 */
+  background-color: var(--color-bg);
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.likeButton:hover:not(:disabled) {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* 누를 때 살짝 눌리는 느낌 (.btn 과 같은 방식) */
+.likeButton:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.likeButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* 눌러둔 상태 */
+.likeButtonOn {
+  border-color: var(--color-danger);
+  background-color: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+/* 하트만 살짝 크게 해서 숫자보다 눈에 먼저 들어오게 합니다. */
+.likeHeart {
+  font-size: 15px;
+  line-height: 1;
+}

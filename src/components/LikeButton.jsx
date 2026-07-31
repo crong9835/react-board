@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { useUser } from '../AuthContext';
 import Modal from './Modal';
+import styles from './LikeButton.module.css';
 
 // 글 상세 페이지의 좋아요 버튼입니다.
 //
@@ -144,9 +145,9 @@ function LikeButton({ postId, initialLikeCount }) {
   }
 
   // 눌러둔 상태면 색이 채워진 버튼으로 보여줍니다.
-  let buttonClass = 'like-button';
+  let buttonClass = styles.likeButton;
   if (isLiked) {
-    buttonClass = 'like-button like-button-on';
+    buttonClass = `${styles.likeButton} ${styles.likeButtonOn}`;
   }
 
   return (
@@ -160,7 +161,7 @@ function LikeButton({ postId, initialLikeCount }) {
         aria-label={isLiked ? '좋아요 취소' : '좋아요'}
         aria-pressed={isLiked}
       >
-        <span className="like-heart">♥</span>
+        <span className={styles.likeHeart}>♥</span>
         <span className="like-count">{likeCount}</span>
       </button>
 

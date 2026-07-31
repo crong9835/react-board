@@ -8,6 +8,7 @@ import { getImageUrl, removePostImage } from '../postImage';
 import Modal from '../components/Modal';
 import Comments from '../components/Comments';
 import LikeButton from '../components/LikeButton';
+import styles from './PostDetail.module.css';
 
 // 한 페이지에 보여주는 글 개수입니다. PostList 의 PAGE_SIZE 와 같아야 합니다.
 // (삭제 후 돌아갈 페이지 번호를 올바르게 계산하는 데 씁니다.)
@@ -220,9 +221,9 @@ function PostDetail() {
   const imageUrl = getImageUrl(post.image_path);
 
   return (
-    <div className="detail">
+    <div className={styles.detail}>
       <h2>{post.title}</h2>
-      <p className="writer">
+      <p className={styles.writer}>
         작성자: {formatWriter(post.writer)} · 작성일:{' '}
         {formatDate(post.created_at)}
       </p>
@@ -231,12 +232,12 @@ function PostDetail() {
           유머 글은 사진이 주인공이고 본문이 설명인 경우가 많아서,
           본문 아래에 두면 정작 볼 것을 스크롤해서 찾아야 합니다. */}
       {imageUrl && (
-        <div className="detail-image">
+        <div className={styles.detailImage}>
           <img src={imageUrl} alt="첨부한 사진" />
         </div>
       )}
 
-      <p className="content">{post.content}</p>
+      <p className={styles.content}>{post.content}</p>
 
       {/* 좋아요 버튼. 본문 바로 아래 가운데에 둡니다.
           개수는 이미 받아온 post.like_count 를 넘겨줍니다.
@@ -245,7 +246,7 @@ function PostDetail() {
           쓰입니다. 다른 글로 옮겨가도 이 컴포넌트는 살아 있어서, 그대로 두면
           이전 글의 좋아요 개수가 남습니다. key 가 바뀌면 React 가 새로 만들어
           초기값이 다시 들어갑니다. (SearchForm, PostEditForm 과 같은 이유) */}
-      <div className="like-area">
+      <div className={styles.likeArea}>
         <LikeButton
           key={postId}
           postId={postId}
@@ -253,7 +254,7 @@ function PostDetail() {
         />
       </div>
 
-      <div className="actions">
+      <div className={styles.actions}>
         {/* 왼쪽: 목록으로 — 보고 있던 페이지 번호를 그대로 달고 돌아갑니다 */}
         <button className="btn" onClick={() => navigate(listPath)}>
           목록으로
@@ -261,7 +262,7 @@ function PostDetail() {
 
         {/* 오른쪽: 본인 글일 때만 보이는 수정/삭제 */}
         {isOwner && (
-          <div className="actions-right">
+          <div className={styles.actionsRight}>
             <button className="btn" onClick={() => navigate(editPath)}>
               수정하기
             </button>

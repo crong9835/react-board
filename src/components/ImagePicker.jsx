@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { validateImageFile, IMAGE_ACCEPT, IMAGE_HINT } from '../postImage';
+import styles from './ImagePicker.module.css';
 
 // 글에 붙일 사진을 고르는 칸입니다. 글쓰기와 글 수정 두 화면에서 함께 씁니다.
 //
@@ -121,31 +122,35 @@ function ImagePicker({ file, existingUrl, onSelect, onRemove, disabled }) {
   }
 
   return (
-    <div className="image-picker">
+    <div className={styles.imagePicker}>
       {/* 진짜 파일 입력칸입니다. 눈에 보이지 않게 숨겨두고, 아래 label 을
           눌렀을 때 열리게 합니다.
           브라우저마다 기본 모양(파일 선택 / 선택된 파일 없음)이 제각각이라
           게시판의 다른 버튼과 나란히 두면 혼자 튀기 때문입니다.
 
-          display: none 이 아니라 .visually-hidden 으로 숨기는 이유는
-          App.css 의 주석에 적어 뒀습니다. */}
+          display: none 이 아니라 .visuallyHidden 으로 숨기는 이유는
+          ImagePicker.module.css 의 주석에 적어 뒀습니다. */}
       <input
         ref={inputRef}
         id="post-image-input"
-        className="visually-hidden"
+        className={styles.visuallyHidden}
         type="file"
         accept={IMAGE_ACCEPT}
         disabled={disabled}
         onChange={handleChange}
       />
 
-      <div className="image-picker-actions">
+      <div className={styles.imagePickerActions}>
         {/* label 의 htmlFor 가 위 입력칸의 id 와 같으면, 이 label 을 누르는 것이
             그 칸을 누르는 것과 같아집니다. 그래서 버튼처럼 꾸며두면 파일 고르기
             창이 열립니다. onClick 을 따로 붙일 필요가 없습니다. */}
         <label
           htmlFor="post-image-input"
-          className={disabled ? 'btn btn-file btn-file-off' : 'btn btn-file'}
+          className={
+            disabled
+              ? `btn ${styles.btnFile} ${styles.btnFileOff}`
+              : `btn ${styles.btnFile}`
+          }
         >
           {shownUrl ? '사진 바꾸기' : '사진 첨부'}
         </label>
@@ -162,13 +167,13 @@ function ImagePicker({ file, existingUrl, onSelect, onRemove, disabled }) {
           </button>
         )}
 
-        <span className="image-picker-hint">{IMAGE_HINT}</span>
+        <span className={styles.imagePickerHint}>{IMAGE_HINT}</span>
       </div>
 
-      {errorMessage && <p className="image-picker-error">{errorMessage}</p>}
+      {errorMessage && <p className={styles.imagePickerError}>{errorMessage}</p>}
 
       {shownUrl && (
-        <div className="image-preview">
+        <div className={styles.imagePreview}>
           {/* alt 는 사진을 못 볼 때(안 열렸거나 화면을 읽어주는 경우) 대신
               읽히는 설명입니다. 사용자가 무엇을 올렸는지 우리는 알 수 없으므로
               "첨부한 사진" 이라는 역할만 적어 둡니다. */}

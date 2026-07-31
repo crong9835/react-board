@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import styles from './Modal.module.css';
 
 // 여러 페이지에서 돌려 쓰는 모달(팝업) 컴포넌트입니다.
 //
@@ -60,11 +61,11 @@ function Modal({ isOpen, message, onClose, onConfirm, confirmText, cancelText })
   // 그래서 모달을 카드 안에 두면 막이 카드 크기로 쪼그라들고 모달도 화면 중앙이 아니라
   // 카드 중앙에 뜹니다. body 로 빼내면 위에 무엇이 있든 영향을 받지 않습니다.
   return createPortal(
-    <div className="modal-overlay">
-      <div className="modal-box">
-        <p className="modal-message">{message}</p>
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalBox}>
+        <p className={styles.modalMessage}>{message}</p>
 
-        <div className="modal-actions">
+        <div className={styles.modalActions}>
           {/* 확인용 모달일 때만 취소 버튼을 보여줍니다. */}
           {isConfirmModal && (
             <button type="button" className="btn" onClick={onClose}>

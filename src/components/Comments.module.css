@@ -1,0 +1,176 @@
+/* Comments.jsx 전용 스타일입니다.
+   본문 아래 붙습니다. 위쪽에 선을 그어 글과 댓글의 경계를 만듭니다. */
+.comments {
+  margin-top: 32px;
+  padding-top: 22px;
+  border-top: 1px solid var(--color-line);
+}
+
+.commentsTitle {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* 댓글 개수만 브랜드 색으로 빼서 눈에 들어오게 합니다. */
+.commentsCount {
+  color: var(--brand-1);
+}
+
+/* .empty 는 목록 화면용으로 위아래 56px 여백이 걸려 있습니다.
+   본문 하나를 채우는 자리라 그만큼 넉넉한데, 댓글 영역에서는 "첫 댓글을
+   남겨보세요" 한 줄에 그 여백이 붙어 빈 공간이 과하게 벌어집니다.
+   .empty 는 common.css 의 전역 클래스라 :global() 로 가리킵니다. */
+.comments :global(.empty) {
+  padding: 24px 0;
+}
+
+/* "이전 댓글 더 보기" — 댓글 목록 위에 가로로 꽉 차게 둡니다.
+   목록 안에 섞이지 않고 "여기서부터 위로 더 있다"는 경계처럼 보이게 합니다. */
+.commentMore {
+  display: block;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 9px 0;
+  border: 1px dashed var(--color-line-mid);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.commentMore:hover:not(:disabled) {
+  border-color: var(--brand-line);
+  color: var(--brand-1);
+}
+
+.commentMore:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.commentList {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+}
+
+.comment {
+  padding: 13px 0;
+}
+
+/* 댓글 사이에만 얇은 선을 긋습니다. (첫 댓글 위에는 안 긋습니다) */
+.comment + .comment {
+  border-top: 1px solid var(--color-line);
+}
+
+/* [닉네임] [날짜] .......... [삭제]
+   margin-left: auto 가 삭제 버튼을 오른쪽 끝으로 밀어냅니다. */
+.commentHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.commentWriter {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.commentDate {
+  font-size: 12px;
+  color: var(--color-text-faint);
+}
+
+/* "삭제" 는 버튼이지만 링크처럼 작게 둡니다.
+   댓글 한 줄에 딸린 작은 동작이라 .btn 을 쓰면 댓글보다 커집니다. */
+.commentDelete {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-text-faint);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.commentDelete:hover {
+  color: var(--color-danger);
+}
+
+.commentContent {
+  margin: 0;
+  white-space: pre-wrap; /* 줄바꿈 그대로 보여주기 */
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+/* 댓글 입력칸.
+   글쓰기 화면의 textarea(min-height 240px)보다 훨씬 낮게 둡니다.
+   댓글은 몇 줄만 쓰는 것이라 그만큼 클 필요가 없습니다. */
+.commentForm textarea {
+  display: block;
+  width: 100%;
+  min-height: 78px;
+  padding: 11px 13px;
+  border: 1px solid var(--color-line-mid);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg);
+  color: inherit;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.7;
+  resize: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.commentForm textarea::placeholder {
+  color: var(--color-text-faint);
+}
+
+.commentForm textarea:focus {
+  outline: none;
+  border-color: var(--brand-1);
+  box-shadow: var(--focus-ring);
+}
+
+/* [글자수] .......... [댓글 등록]
+   글자수는 왼쪽, 버튼은 오른쪽으로 갈라놓습니다. */
+.commentFormActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+/* .char-count 는 글쓰기 화면용으로 오른쪽 정렬 + 음수 여백이 걸려 있습니다.
+   여기서는 왼쪽에 놓이므로 그 부분만 되돌립니다.
+   .char-count 는 common.css 의 전역 클래스라 :global() 로 가리킵니다. */
+.commentFormActions :global(.char-count) {
+  margin: 0;
+  text-align: left;
+}
+
+/* 로그인하지 않았을 때 입력칸 대신 나오는 안내 */
+.commentLogin {
+  margin: 0;
+  padding: 18px 0;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--color-text-muted);
+}
+
+.commentLogin a {
+  color: var(--brand-1);
+  font-weight: 600;
+}

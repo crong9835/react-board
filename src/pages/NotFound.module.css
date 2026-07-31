@@ -1,0 +1,61 @@
+/* NotFound.jsx 전용 스타일입니다 (안내 페이지, 404 포함). */
+
+/* 안내 페이지의 "글 목록으로" 버튼을 가운데에 둡니다. */
+.centerActions {
+  display: flex;
+  justify-content: center;
+}
+
+.notice {
+  text-align: center;
+  padding: 40px 20px 32px;
+}
+
+/* 404 페이지의 큰 숫자 */
+.noticeCode {
+  margin: 0 0 4px;
+  font-size: 68px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+
+  /* 로고와 같은 방식으로 숫자 안쪽을 보라 그라데이션으로 채웁니다. */
+  background-image: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.noticeTitle {
+  margin: 0 0 10px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.noticeLead {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.noticeDesc {
+  margin: 0 0 28px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 560px) {
+  .notice {
+    padding: 24px 8px 20px;
+  }
+
+  .noticeCode {
+    font-size: 56px;
+  }
+
+  .noticeTitle {
+    font-size: 22px;
+  }
+}

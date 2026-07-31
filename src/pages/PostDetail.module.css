@@ -1,0 +1,78 @@
+/* PostDetail.jsx 전용 스타일입니다. */
+.detail h2 {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+}
+
+.writer {
+  color: var(--color-text-muted);
+  font-size: 12.5px;
+  margin: 0 0 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+/* 상세 페이지에 붙는 첨부 사진. 제목·작성자 아래, 본문 위에 옵니다.
+   max-height 로 화면 높이의 70% 에서 멈추게 합니다. 세로로 아주 긴 사진을
+   원본대로 두면 스크롤을 한참 내려야 본문과 댓글이 나오기 때문입니다. */
+.detailImage {
+  margin: 0 0 22px;
+  text-align: center;
+}
+
+.detailImage img {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-line);
+}
+
+.content {
+  min-height: 170px;
+  white-space: pre-wrap; /* 줄바꿈 그대로 보여주기 */
+  line-height: 1.85; /* 긴 글을 읽기 편하게 */
+  font-size: 15px;
+}
+
+/* 사진이 있으면 본문의 최소 높이를 없앱니다.
+   min-height: 170px 은 글만 있는 짧은 글이 휑해 보이지 않게 둔 것인데,
+   사진이 이미 자리를 채운 뒤에는 본문 아래에 큰 빈칸으로 남습니다.
+
+   .detailImage + .content 는 "바로 앞에 .detailImage 가 있는 .content"
+   라는 뜻입니다. 사진이 없는 글에는 이 규칙이 닿지 않습니다. */
+.detailImage + .content {
+  min-height: 0;
+}
+
+/* ── 좋아요 ──────────────────────────────────────────────
+   본문과 [목록으로] 사이, 가운데에 둡니다. */
+.likeArea {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 20px;
+}
+
+/* ── 버튼 ────────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  justify-content: space-between; /* 목록으로(왼쪽) ↔ 수정·삭제(오른쪽) */
+  gap: 8px;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-line);
+}
+
+/* 오른쪽에 묶이는 수정/삭제 버튼 그룹 */
+.actionsRight {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .detail h2 {
+    font-size: 19px;
+  }
+}

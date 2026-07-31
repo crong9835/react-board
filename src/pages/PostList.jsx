@@ -13,6 +13,7 @@ import {
 import { useDebouncedValue } from '../useDebouncedValue';
 import PopularPosts from '../components/PopularPosts';
 import NotFound from './NotFound';
+import styles from './PostList.module.css';
 
 // 한 페이지에 보여줄 글 개수. 이 숫자만 바꾸면 전체 페이지 수와 버튼도 따라옵니다.
 // (상세 페이지의 POSTS_PER_PAGE 와 같은 값이어야 합니다.)
@@ -533,7 +534,7 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
 
   return (
     <div>
-      <div className="list-header">
+      <div className={styles.listHeader}>
         <h2>{heading}</h2>
         <Link to="/write" className="btn btn-primary">
           글쓰기
@@ -563,7 +564,7 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
           "검색 해제" 버튼은 없앴습니다. 입력칸의 글자를 지우면 그대로 전체
           목록으로 돌아오므로, 같은 일을 하는 버튼이 하나 더 있을 이유가 없습니다. */}
       {isSearching && !isFirstLoad && (
-        <p className="search-info">
+        <p className={styles.searchInfo}>
           {getSearchTypeLabel(searchType)}에 <strong>{searchedKeyword}</strong>
           (이)가 들어간 글 {totalCount}건
         </p>
@@ -614,14 +615,20 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
       {hasPosts && (
         <>
           {/* 인기글 페이지는 좋아요 열이 하나 더 붙어서 열 너비가 다릅니다.
-              그 차이는 CSS 에서 .post-list-popular 로 처리합니다. */}
-          <ul className={isPopular ? 'post-list post-list-popular' : 'post-list'}>
+              그 차이는 CSS 에서 .postListPopular 로 처리합니다. */}
+          <ul
+            className={
+              isPopular
+                ? `${styles.postList} ${styles.postListPopular}`
+                : styles.postList
+            }
+          >
             {/* 각 열이 무엇인지 알려주는 머리글 줄 (클릭 대상이 아님) */}
-            <li className="post-list-head">
-              <span className="col-title">제목</span>
-              {isPopular && <span className="col-likes">좋아요</span>}
-              <span className="col-writer">작성자</span>
-              <span className="col-date">작성일</span>
+            <li className={styles.postListHead}>
+              <span className={styles.colTitle}>제목</span>
+              {isPopular && <span className={styles.colLikes}>좋아요</span>}
+              <span className={styles.colWriter}>작성자</span>
+              <span className={styles.colDate}>작성일</span>
             </li>
 
             {posts.map((post) => (
@@ -634,28 +641,28 @@ function PostList({ heading = '유머 모음집', sortBy = 'latest' }) {
                       그쪽으로 가서 정작 제목이 잘 안 읽힙니다. 하지만 인기글은
                       좋아요 순으로 세운 목록이라, 개수가 없으면 유머 모음집과
                       똑같이 생긴 목록이 알 수 없는 순서로 놓인 것이 됩니다. */}
-                  <span className="col-title">{post.title}</span>
+                  <span className={styles.colTitle}>{post.title}</span>
                   {isPopular && (
-                    <span className="col-likes">♥ {post.like_count}</span>
+                    <span className={styles.colLikes}>♥ {post.like_count}</span>
                   )}
-                  <span className="col-writer">
+                  <span className={styles.colWriter}>
                     {formatWriter(post.writer)}
                   </span>
-                  <span className="col-date">{formatDate(post.created_at)}</span>
+                  <span className={styles.colDate}>{formatDate(post.created_at)}</span>
                 </Link>
               </li>
             ))}
 
-            {/* 높이만 채우는 빈 줄입니다. 글 줄과 같은 규칙(.post-list-blank)을 써서
+            {/* 높이만 채우는 빈 줄입니다. 글 줄과 같은 규칙(.postListBlank)을 써서
                 높이를 똑같이 맞추고, 안에는 눈에 안 보이는 공백 한 칸만 둡니다. */}
             {blankRowNumbers.map((number) => (
-              <li key={`blank-${number}`} className="post-list-blank">
-                <span className="col-title">&nbsp;</span>
+              <li key={`blank-${number}`} className={styles.postListBlank}>
+                <span className={styles.colTitle}>&nbsp;</span>
               </li>
             ))}
           </ul>
 
-          <div className="pagination">
+          <div className={styles.pagination}>
             <button
               type="button"
               className="btn"
@@ -731,9 +738,9 @@ function SearchForm({ type, keyword, onTypeChange, onKeywordChange }) {
   // select 는 화면에 "제목/작성자" 글자가 보이지만 그것은 지금 고른 값이지,
   // 이 칸이 무엇을 고르는 칸인지 알려주는 이름은 아니기 때문입니다.
   return (
-    <form className="search-form" onSubmit={handleSubmit}>
+    <form className={styles.searchForm} onSubmit={handleSubmit}>
       <select
-        className="search-select"
+        className={styles.searchSelect}
         aria-label="검색 대상"
         value={type}
         onChange={(e) => onTypeChange(e.target.value)}
@@ -746,7 +753,7 @@ function SearchForm({ type, keyword, onTypeChange, onKeywordChange }) {
       </select>
 
       <input
-        className="search-input"
+        className={styles.searchInput}
         type="text"
         placeholder="검색어를 입력하세요"
         aria-label="검색어"
